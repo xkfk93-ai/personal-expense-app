@@ -4,10 +4,11 @@
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
   <meta name="theme-color" content="#111827" />
-  <meta name="description" content="개인용 지출 기록장 - 메인 화면과 캘린더 화면으로 지출을 기록하고 확인하는 설치형 웹앱" />
+  <meta name="description" content="개인용 지출 기록장 - 지출 입력, 캘린더, 통계, 그래프, 고정지출, 검색 기능을 제공하는 설치형 웹앱" />
   <link rel="manifest" href="./manifest.webmanifest" />
   <link rel="apple-touch-icon" href="./icons/icon-192.png" />
   <title>개인 지출 기록장</title>
+
   <style>
     :root {
       --bg: #f6f4ef;
@@ -19,6 +20,7 @@
       --accent-soft: #ede8de;
       --danger: #b42318;
       --good: #116b42;
+      --blue: #2f4fe3;
       --shadow: 0 14px 40px rgba(17, 24, 39, 0.08);
       --radius: 22px;
     }
@@ -39,7 +41,7 @@
     }
 
     .app {
-      width: min(100%, 720px);
+      width: min(100%, 780px);
       margin: 0 auto;
     }
 
@@ -62,9 +64,16 @@
     }
 
     .view-switch {
-      display: flex;
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
       gap: 8px;
       margin-top: 16px;
+    }
+
+    @media (max-width: 420px) {
+      .view-switch {
+        grid-template-columns: repeat(2, 1fr);
+      }
     }
 
     .summary-grid {
@@ -74,7 +83,7 @@
       margin-bottom: 14px;
     }
 
-    @media (min-width: 560px) {
+    @media (min-width: 640px) {
       .summary-grid { grid-template-columns: repeat(3, 1fr); }
     }
 
@@ -132,6 +141,12 @@
       letter-spacing: -0.04em;
     }
 
+    h3 {
+      margin: 0 0 10px;
+      font-size: 16px;
+      letter-spacing: -0.04em;
+    }
+
     .form {
       display: grid;
       gap: 12px;
@@ -175,7 +190,7 @@
       gap: 12px;
     }
 
-    @media (min-width: 560px) {
+    @media (min-width: 640px) {
       .row.two { grid-template-columns: 1fr 1fr; }
       .row.three { grid-template-columns: 1fr 1fr 1fr; }
     }
@@ -232,9 +247,7 @@
       box-shadow: var(--shadow);
     }
 
-    .install-box.show {
-      display: block;
-    }
+    .install-box.show { display: block; }
 
     .install-box strong {
       display: block;
@@ -256,7 +269,7 @@
       margin-top: 4px;
     }
 
-    @media (min-width: 560px) {
+    @media (min-width: 640px) {
       .actions { grid-template-columns: 1fr 1fr; }
     }
 
@@ -318,6 +331,7 @@
       gap: 8px;
       margin-top: 12px;
       justify-content: flex-end;
+      flex-wrap: wrap;
     }
 
     .empty {
@@ -336,9 +350,7 @@
       margin-top: 10px;
     }
 
-    .hidden {
-      display: none !important;
-    }
+    .hidden { display: none !important; }
 
     .calendar-head {
       display: flex;
@@ -356,11 +368,17 @@
       flex: 1;
     }
 
-    .calendar-stats {
+    .calendar-stats, .stats-grid {
       display: grid;
       grid-template-columns: 1fr 1fr;
       gap: 10px;
       margin-bottom: 14px;
+    }
+
+    @media (max-width: 420px) {
+      .calendar-stats, .stats-grid {
+        grid-template-columns: 1fr;
+      }
     }
 
     .mini-stat {
@@ -463,6 +481,79 @@
       letter-spacing: -0.04em;
     }
 
+    .bar-list {
+      display: grid;
+      gap: 12px;
+    }
+
+    .bar-row {
+      display: grid;
+      gap: 7px;
+    }
+
+    .bar-head {
+      display: flex;
+      justify-content: space-between;
+      gap: 10px;
+      font-size: 14px;
+      font-weight: 800;
+    }
+
+    .bar-meta {
+      font-size: 12px;
+      color: var(--muted);
+      font-weight: 500;
+    }
+
+    .bar-track {
+      height: 13px;
+      border-radius: 999px;
+      background: #f0ece3;
+      overflow: hidden;
+      border: 1px solid var(--line);
+    }
+
+    .bar-fill {
+      height: 100%;
+      width: 0%;
+      background: var(--accent);
+      border-radius: 999px;
+    }
+
+    .chart-wrap {
+      width: 100%;
+      overflow: hidden;
+      background: #fffdf9;
+      border: 1px solid var(--line);
+      border-radius: 18px;
+      padding: 12px;
+    }
+
+    canvas {
+      width: 100%;
+      height: 260px;
+      display: block;
+    }
+
+    .tab-row {
+      display: grid;
+      grid-template-columns: 1fr 1fr 1fr;
+      gap: 8px;
+      margin-bottom: 12px;
+    }
+
+    .recurring-badge {
+      display: inline-flex;
+      align-items: center;
+      border-radius: 999px;
+      padding: 4px 8px;
+      font-size: 11px;
+      font-weight: 800;
+      background: #eef2ff;
+      color: #2f4fe3;
+      margin-left: 6px;
+    }
+
     .toast {
       position: fixed;
       left: 50%;
@@ -485,9 +576,7 @@
       opacity: 1;
     }
 
-    .file-input {
-      display: none;
-    }
+    .file-input { display: none; }
 
     .footer {
       color: var(--muted);
@@ -507,19 +596,21 @@
 
       <div class="view-switch">
         <button class="btn secondary active" id="mainViewBtn" type="button">메인</button>
-        <button class="btn secondary" id="calendarViewBtn" type="button">캘린더 보기</button>
+        <button class="btn secondary" id="calendarViewBtn" type="button">캘린더</button>
+        <button class="btn secondary" id="statsViewBtn" type="button">통계</button>
+        <button class="btn secondary" id="recurringViewBtn" type="button">고정지출</button>
       </div>
     </section>
 
     <section class="install-box" id="installBox">
       <strong>앱처럼 설치할 수 있습니다</strong>
-      <p>갤럭시 Chrome에서 설치 버튼이 보이면 눌러 주세요. 버튼이 안 보이면 Chrome 메뉴의 ‘홈 화면에 추가’ 또는 ‘앱 설치’를 사용하면 됩니다.</p>
+      <p>갤럭시 브라우저에서 설치 버튼이 보이면 눌러 주세요. 버튼이 안 보이면 브라우저 메뉴의 ‘홈 화면에 추가’ 또는 ‘앱 설치’를 사용하면 됩니다.</p>
       <button class="btn secondary" id="installBtn" type="button">앱 설치하기</button>
     </section>
 
     <section class="summary-grid">
       <div class="summary-card primary">
-        <div class="summary-label">이번 달 사용금액</div>
+        <div class="summary-label">이번 지출 기간 사용금액</div>
         <div class="summary-amount" id="monthTotal">0원</div>
       </div>
       <div class="summary-card">
@@ -530,6 +621,27 @@
         <div class="summary-label">전체 사용금액</div>
         <div class="summary-amount" id="allTotal">0원</div>
       </div>
+    </section>
+
+    <section class="card">
+      <div class="card-title">
+        <h2>지출 기준 설정</h2>
+      </div>
+
+      <div class="row two">
+        <div class="field">
+          <label for="cycleStartDay">한달 시작일</label>
+          <select id="cycleStartDay"></select>
+        </div>
+        <div class="mini-stat">
+          <div class="mini-stat-label">현재 지출 기간</div>
+          <div class="mini-stat-value" id="currentCycleText">-</div>
+        </div>
+      </div>
+
+      <p class="notice">
+        월급날 기준으로 한달을 계산할 수 있습니다. 예를 들어 5일로 설정하면 지출 기간은 5일 ~ 다음 달 4일로 계산됩니다.
+      </p>
     </section>
 
     <section id="mainView">
@@ -585,21 +697,28 @@
 
       <section class="card">
         <div class="card-title">
-          <h2>지출 내역</h2>
+          <h2>검색 / 지출 내역</h2>
         </div>
 
-        <div class="filters">
-          <select id="filterMonth" title="월별 필터"></select>
-          <select id="filterCategory" title="카테고리 필터">
-            <option value="전체">전체 카테고리</option>
-            <option value="식비">식비</option>
-            <option value="카페/간식">카페/간식</option>
-            <option value="교통">교통</option>
-            <option value="쇼핑">쇼핑</option>
-            <option value="생활용품">생활용품</option>
-            <option value="구독/통신">구독/통신</option>
-            <option value="기타">기타</option>
-          </select>
+        <div class="form" style="margin-bottom:12px;">
+          <div class="field">
+            <label for="searchInput">검색어</label>
+            <input id="searchInput" type="search" placeholder="사용처, 메모, 카테고리, 날짜 검색" />
+          </div>
+
+          <div class="filters">
+            <select id="filterMonth" title="월별 필터"></select>
+            <select id="filterCategory" title="카테고리 필터">
+              <option value="전체">전체 카테고리</option>
+              <option value="식비">식비</option>
+              <option value="카페/간식">카페/간식</option>
+              <option value="교통">교통</option>
+              <option value="쇼핑">쇼핑</option>
+              <option value="생활용품">생활용품</option>
+              <option value="구독/통신">구독/통신</option>
+              <option value="기타">기타</option>
+            </select>
+          </div>
         </div>
 
         <div class="list" id="expenseList"></div>
@@ -657,6 +776,116 @@
       </section>
     </section>
 
+    <section id="statsView" class="hidden">
+      <section class="card">
+        <div class="card-title">
+          <h2>카테고리별 통계</h2>
+        </div>
+
+        <div class="row two" style="margin-bottom:12px;">
+          <div class="field">
+            <label for="statsMonth">통계 기간</label>
+            <select id="statsMonth"></select>
+          </div>
+          <div class="field">
+            <label for="chartType">그래프 종류</label>
+            <select id="chartType">
+              <option value="category">카테고리별</option>
+              <option value="daily">날짜별</option>
+            </select>
+          </div>
+        </div>
+
+        <div class="stats-grid">
+          <div class="mini-stat">
+            <div class="mini-stat-label">선택 기간 총액</div>
+            <div class="mini-stat-value" id="statsTotal">0원</div>
+          </div>
+          <div class="mini-stat">
+            <div class="mini-stat-label">가장 많이 쓴 카테고리</div>
+            <div class="mini-stat-value" id="statsTopCategory">-</div>
+          </div>
+        </div>
+
+        <div class="chart-wrap">
+          <canvas id="expenseChart" width="720" height="300"></canvas>
+        </div>
+      </section>
+
+      <section class="card">
+        <div class="card-title">
+          <h2>카테고리 상세</h2>
+        </div>
+        <div class="bar-list" id="categoryStatsList"></div>
+      </section>
+    </section>
+
+    <section id="recurringView" class="hidden">
+      <section class="card">
+        <div class="card-title">
+          <h2 id="recurringFormTitle">고정지출 추가</h2>
+          <button class="btn ghost small" id="cancelRecurringEditBtn" type="button" style="display:none;">수정 취소</button>
+        </div>
+
+        <form class="form" id="recurringForm">
+          <input type="hidden" id="recurringEditId" />
+
+          <div class="row two">
+            <div class="field">
+              <label for="recurringPlace">고정지출명</label>
+              <input id="recurringPlace" type="text" placeholder="예: 넷플릭스, 통신비, 보험료" required />
+            </div>
+            <div class="field">
+              <label for="recurringAmount">금액</label>
+              <input id="recurringAmount" type="number" inputmode="numeric" min="1" step="1" placeholder="예: 13500" required />
+            </div>
+          </div>
+
+          <div class="row three">
+            <div class="field">
+              <label for="recurringCategory">카테고리</label>
+              <select id="recurringCategory" required>
+                <option value="구독/통신">구독/통신</option>
+                <option value="식비">식비</option>
+                <option value="카페/간식">카페/간식</option>
+                <option value="교통">교통</option>
+                <option value="쇼핑">쇼핑</option>
+                <option value="생활용품">생활용품</option>
+                <option value="기타">기타</option>
+              </select>
+            </div>
+            <div class="field">
+              <label for="recurringDay">매월 입력일</label>
+              <select id="recurringDay"></select>
+            </div>
+            <div class="field">
+              <label for="recurringStartMonth">시작 월</label>
+              <input id="recurringStartMonth" type="month" required />
+            </div>
+          </div>
+
+          <div class="field">
+            <label for="recurringNote">메모</label>
+            <textarea id="recurringNote" placeholder="필요하면 간단히 적어두세요."></textarea>
+          </div>
+
+          <button class="btn" type="submit" id="recurringSubmitBtn">고정지출 저장</button>
+        </form>
+
+        <p class="notice">
+          저장한 고정지출은 앱을 열 때 이번 달 내역에 자동으로 입력됩니다. 중복 입력되지 않도록 같은 월에는 한 번만 생성됩니다.
+        </p>
+      </section>
+
+      <section class="card">
+        <div class="card-title">
+          <h2>고정지출 목록</h2>
+          <button class="btn secondary small" id="applyRecurringBtn" type="button">이번 달 자동 입력</button>
+        </div>
+        <div class="list" id="recurringList"></div>
+      </section>
+    </section>
+
     <div class="footer">
       개인용 설치형 웹앱 · 데이터는 사용자의 기기에 저장됩니다.
     </div>
@@ -666,6 +895,10 @@
 
   <script>
     const STORAGE_KEY = "personal-expense-app-v1";
+    const RECURRING_KEY = "personal-expense-recurring-v1";
+    const CYCLE_START_KEY = "personal-expense-cycle-start-day-v1";
+    const CATEGORIES = ["식비", "카페/간식", "교통", "쇼핑", "생활용품", "구독/통신", "기타"];
+
     const $ = (id) => document.getElementById(id);
 
     const form = $("expenseForm");
@@ -679,17 +912,25 @@
     const monthTotal = $("monthTotal");
     const todayTotal = $("todayTotal");
     const allTotal = $("allTotal");
+    const cycleStartDay = $("cycleStartDay");
+    const currentCycleText = $("currentCycleText");
     const expenseList = $("expenseList");
     const filterMonth = $("filterMonth");
     const filterCategory = $("filterCategory");
+    const searchInput = $("searchInput");
     const submitBtn = $("submitBtn");
     const formTitle = $("formTitle");
     const cancelEditBtn = $("cancelEditBtn");
 
     const mainView = $("mainView");
     const calendarView = $("calendarView");
+    const statsView = $("statsView");
+    const recurringView = $("recurringView");
+
     const mainViewBtn = $("mainViewBtn");
     const calendarViewBtn = $("calendarViewBtn");
+    const statsViewBtn = $("statsViewBtn");
+    const recurringViewBtn = $("recurringViewBtn");
 
     const calendarGrid = $("calendarGrid");
     const calendarMonthTitle = $("calendarMonthTitle");
@@ -698,7 +939,30 @@
     const selectedDateTitle = $("selectedDateTitle");
     const selectedDateList = $("selectedDateList");
 
-    let expenses = loadExpenses();
+    const statsMonth = $("statsMonth");
+    const chartType = $("chartType");
+    const statsTotal = $("statsTotal");
+    const statsTopCategory = $("statsTopCategory");
+    const categoryStatsList = $("categoryStatsList");
+    const expenseChart = $("expenseChart");
+
+    const recurringForm = $("recurringForm");
+    const recurringEditId = $("recurringEditId");
+    const recurringPlace = $("recurringPlace");
+    const recurringAmount = $("recurringAmount");
+    const recurringCategory = $("recurringCategory");
+    const recurringDay = $("recurringDay");
+    const recurringStartMonth = $("recurringStartMonth");
+    const recurringNote = $("recurringNote");
+    const recurringSubmitBtn = $("recurringSubmitBtn");
+    const recurringFormTitle = $("recurringFormTitle");
+    const cancelRecurringEditBtn = $("cancelRecurringEditBtn");
+    const recurringList = $("recurringList");
+
+    let expenses = loadJSON(STORAGE_KEY, []);
+    let recurringRules = loadJSON(RECURRING_KEY, []);
+    let cycleStartDayValue = Number(localStorage.getItem(CYCLE_START_KEY) || "1");
+    if (!cycleStartDayValue || cycleStartDayValue < 1 || cycleStartDayValue > 31) cycleStartDayValue = 1;
     let calendarYear;
     let calendarMonth;
     let selectedDate = todayISO();
@@ -718,7 +982,7 @@
 
     $("installBtn").addEventListener("click", async () => {
       if (!deferredInstallPrompt) {
-        showToast("Chrome 메뉴에서 홈 화면에 추가를 눌러 주세요.");
+        showToast("브라우저 메뉴에서 홈 화면에 추가를 눌러 주세요.");
         return;
       }
       deferredInstallPrompt.prompt();
@@ -748,15 +1012,69 @@
       return dateString.slice(0, 7);
     }
 
-    function formatDate(dateString) {
-      const [y, m, d] = dateString.split("-");
-      return `${y}.${m}.${d}`;
-    }
-
-    function formatMonth(key) {
+    function monthLabel(key) {
       if (key === "전체") return "전체 기간";
       const [y, m] = key.split("-");
       return `${y}년 ${Number(m)}월`;
+    }
+
+    function toISODate(date) {
+      const local = new Date(date.getTime() - date.getTimezoneOffset() * 60000);
+      return local.toISOString().slice(0, 10);
+    }
+
+    function daysInMonth(year, monthIndex) {
+      return new Date(year, monthIndex + 1, 0).getDate();
+    }
+
+    function cycleStartDateFor(year, monthIndex) {
+      const day = Math.min(cycleStartDayValue, daysInMonth(year, monthIndex));
+      return new Date(year, monthIndex, day);
+    }
+
+    function getCycleInfoForDate(dateString) {
+      const date = new Date(dateString + "T00:00:00");
+      const year = date.getFullYear();
+      const month = date.getMonth();
+      const currentStart = cycleStartDateFor(year, month);
+      const start = date >= currentStart ? currentStart : cycleStartDateFor(year, month - 1);
+      const nextStart = cycleStartDateFor(start.getFullYear(), start.getMonth() + 1);
+      const end = new Date(nextStart);
+      end.setDate(end.getDate() - 1);
+
+      return {
+        key: toISODate(start),
+        start: toISODate(start),
+        end: toISODate(end)
+      };
+    }
+
+    function getCycleInfoFromStart(startKey) {
+      const start = new Date(startKey + "T00:00:00");
+      const nextStart = cycleStartDateFor(start.getFullYear(), start.getMonth() + 1);
+      const end = new Date(nextStart);
+      end.setDate(end.getDate() - 1);
+
+      return {
+        key: startKey,
+        start: toISODate(start),
+        end: toISODate(end)
+      };
+    }
+
+    function cycleLabel(key) {
+      if (key === "전체") return "전체 기간";
+      const info = getCycleInfoFromStart(key);
+      return `${formatDate(info.start)} ~ ${formatDate(info.end)}`;
+    }
+
+    function isInCycle(item, selectedCycle) {
+      return selectedCycle === "전체" || getCycleInfoForDate(item.date).key === selectedCycle;
+    }
+
+    function formatDate(dateString) {
+      const [y, m, d] = dateString.split("-");
+      return `${y}.${m}.${d}`;
     }
 
     function formatWon(value) {
@@ -780,16 +1098,21 @@
       setTimeout(() => toast.classList.remove("show"), 1700);
     }
 
-    function loadExpenses() {
+    function loadJSON(key, fallback) {
       try {
-        return JSON.parse(localStorage.getItem(STORAGE_KEY)) || [];
+        return JSON.parse(localStorage.getItem(key)) || fallback;
       } catch {
-        return [];
+        return fallback;
       }
     }
 
-    function saveExpenses() {
+    function saveAll() {
       localStorage.setItem(STORAGE_KEY, JSON.stringify(expenses));
+      localStorage.setItem(RECURRING_KEY, JSON.stringify(recurringRules));
+    }
+
+    function sum(items) {
+      return items.reduce((acc, item) => acc + Number(item.amount || 0), 0);
     }
 
     function setTodayUI() {
@@ -801,57 +1124,119 @@
       calendarYear = now.getFullYear();
       calendarMonth = now.getMonth();
       selectedDate = todayISO();
+      recurringStartMonth.value = monthKey(todayISO());
+      fillCycleStartDays();
+      fillRecurringDays();
+      updateCycleSettingText();
+    }
+
+    function fillCycleStartDays() {
+      cycleStartDay.innerHTML = "";
+      for (let i = 1; i <= 31; i++) {
+        const option = document.createElement("option");
+        option.value = String(i);
+        option.textContent = `${i}일`;
+        cycleStartDay.appendChild(option);
+      }
+      cycleStartDay.value = String(cycleStartDayValue);
+    }
+
+    function updateCycleSettingText() {
+      const current = getCycleInfoForDate(todayISO());
+      currentCycleText.textContent = cycleLabel(current.key);
+    }
+
+    function fillRecurringDays() {
+      recurringDay.innerHTML = "";
+      for (let i = 1; i <= 31; i++) {
+        const option = document.createElement("option");
+        option.value = String(i);
+        option.textContent = `${i}일`;
+        recurringDay.appendChild(option);
+      }
+      recurringDay.value = "1";
     }
 
     function updateSummary() {
       const today = todayISO();
-      const currentMonth = monthKey(today);
-      const sum = (items) => items.reduce((acc, item) => acc + Number(item.amount || 0), 0);
+      const currentCycle = getCycleInfoForDate(today);
       todayTotal.textContent = formatWon(sum(expenses.filter(item => item.date === today)));
-      monthTotal.textContent = formatWon(sum(expenses.filter(item => monthKey(item.date) === currentMonth)));
+      monthTotal.textContent = formatWon(sum(expenses.filter(item => getCycleInfoForDate(item.date).key === currentCycle.key)));
       allTotal.textContent = formatWon(sum(expenses));
+      updateCycleSettingText();
     }
 
-    function updateMonthFilter() {
-      const months = [...new Set(expenses.map(item => monthKey(item.date)))].sort().reverse();
-      const current = filterMonth.value || monthKey(todayISO());
-      filterMonth.innerHTML = "";
+    function getPeriodOptions() {
+      const periods = [...new Set(expenses.map(item => getCycleInfoForDate(item.date).key))].sort().reverse();
+      const currentPeriod = getCycleInfoForDate(todayISO()).key;
+      if (!periods.includes(currentPeriod)) periods.unshift(currentPeriod);
+      return [...new Set(periods)];
+    }
 
-      const allOption = document.createElement("option");
-      allOption.value = "전체";
-      allOption.textContent = "전체 기간";
-      filterMonth.appendChild(allOption);
+    function updatePeriodSelect(selectEl, currentValue, includeAll = true) {
+      const periods = getPeriodOptions();
+      const current = currentValue || getCycleInfoForDate(todayISO()).key;
+      selectEl.innerHTML = "";
 
-      months.forEach(key => {
+      if (includeAll) {
+        const allOption = document.createElement("option");
+        allOption.value = "전체";
+        allOption.textContent = "전체 기간";
+        selectEl.appendChild(allOption);
+      }
+
+      periods.forEach(key => {
         const option = document.createElement("option");
         option.value = key;
-        option.textContent = formatMonth(key);
-        filterMonth.appendChild(option);
+        option.textContent = cycleLabel(key);
+        selectEl.appendChild(option);
       });
 
-      if (months.includes(current)) filterMonth.value = current;
-      else if (months.includes(monthKey(todayISO()))) filterMonth.value = monthKey(todayISO());
-      else filterMonth.value = "전체";
+      if ([...selectEl.options].some(option => option.value === current)) {
+        selectEl.value = current;
+      } else {
+        selectEl.value = includeAll ? "전체" : getCycleInfoForDate(todayISO()).key;
+      }
+    }
+
+    function updateFilters() {
+      updatePeriodSelect(filterMonth, filterMonth.value, true);
+      updatePeriodSelect(statsMonth, statsMonth.value || getCycleInfoForDate(todayISO()).key, true);
     }
 
     function getFilteredExpenses() {
-      const selectedMonth = filterMonth.value;
+      const selectedPeriod = filterMonth.value;
       const selectedCategory = filterCategory.value;
+      const q = searchInput.value.trim().toLowerCase();
+
       return expenses
-        .filter(item => selectedMonth === "전체" || monthKey(item.date) === selectedMonth)
+        .filter(item => isInCycle(item, selectedPeriod))
         .filter(item => selectedCategory === "전체" || item.category === selectedCategory)
+        .filter(item => {
+          if (!q) return true;
+          const target = [
+            item.date,
+            formatDate(item.date),
+            item.category,
+            item.place,
+            item.note || "",
+            String(item.amount || "")
+          ].join(" ").toLowerCase();
+          return target.includes(q);
+        })
         .sort((a, b) => {
-          if (a.date === b.date) return b.createdAt - a.createdAt;
+          if (a.date === b.date) return (b.createdAt || 0) - (a.createdAt || 0);
           return b.date.localeCompare(a.date);
         });
     }
 
     function renderExpenseItem(item, showActions = true) {
+      const recurringMark = item.recurringRuleId ? `<span class="recurring-badge">고정</span>` : "";
       return `
         <article class="item">
           <div class="item-main">
             <div>
-              <div class="item-title">${escapeHTML(item.place)}</div>
+              <div class="item-title">${escapeHTML(item.place)}${recurringMark}</div>
               <div class="item-meta">${formatDate(item.date)} · ${escapeHTML(item.category)}</div>
             </div>
             <div class="item-amount">${formatWon(item.amount)}</div>
@@ -868,14 +1253,14 @@
     function renderList() {
       const items = getFilteredExpenses();
       if (!items.length) {
-        expenseList.innerHTML = `<div class="empty">아직 표시할 지출 내역이 없습니다.</div>`;
+        expenseList.innerHTML = `<div class="empty">표시할 지출 내역이 없습니다.</div>`;
         return;
       }
       expenseList.innerHTML = items.map(item => renderExpenseItem(item, true)).join("");
     }
 
     function getDailyItems(dateString) {
-      return expenses.filter(item => item.date === dateString).sort((a, b) => b.createdAt - a.createdAt);
+      return expenses.filter(item => item.date === dateString).sort((a, b) => (b.createdAt || 0) - (a.createdAt || 0));
     }
 
     function renderCalendar() {
@@ -885,10 +1270,8 @@
       calendarMonthTitle.textContent = `${year}년 ${month + 1}월`;
 
       const monthItems = expenses.filter(item => monthKey(item.date) === monthKeyValue);
-      const monthSum = monthItems.reduce((sum, item) => sum + Number(item.amount || 0), 0);
-      const spentDays = new Set(monthItems.map(item => item.date)).size;
-      calendarMonthTotal.textContent = formatWon(monthSum);
-      calendarSpentDays.textContent = `${spentDays}일`;
+      calendarMonthTotal.textContent = formatWon(sum(monthItems));
+      calendarSpentDays.textContent = `${new Set(monthItems.map(item => item.date)).size}일`;
 
       const firstDay = new Date(year, month, 1).getDay();
       const lastDate = new Date(year, month + 1, 0).getDate();
@@ -910,7 +1293,7 @@
       const today = todayISO();
       calendarGrid.innerHTML = cells.map(cell => {
         const dayItems = getDailyItems(cell.dateString);
-        const total = dayItems.reduce((sum, item) => sum + Number(item.amount || 0), 0);
+        const total = sum(dayItems);
         const classes = ["day", cell.other ? "other" : "", cell.dateString === today ? "today" : "", cell.dateString === selectedDate ? "selected" : ""].filter(Boolean).join(" ");
         return `
           <button class="${classes}" type="button" onclick="selectCalendarDate('${cell.dateString}')">
@@ -927,7 +1310,7 @@
 
     function renderSelectedDateList() {
       const items = getDailyItems(selectedDate);
-      const total = items.reduce((sum, item) => sum + Number(item.amount || 0), 0);
+      const total = sum(items);
       selectedDateTitle.textContent = `${formatDate(selectedDate)} · ${formatWon(total)}`;
 
       if (!items.length) {
@@ -945,28 +1328,261 @@
       renderCalendar();
     }
 
-    function switchView(view) {
-      const isCalendar = view === "calendar";
-      mainView.classList.toggle("hidden", isCalendar);
-      calendarView.classList.toggle("hidden", !isCalendar);
-      mainViewBtn.classList.toggle("active", !isCalendar);
-      calendarViewBtn.classList.toggle("active", isCalendar);
-      if (isCalendar) {
-        renderCalendar();
-        window.scrollTo({ top: 0, behavior: "smooth" });
+    function getStatsItems() {
+      const selected = statsMonth.value || getCycleInfoForDate(todayISO()).key;
+      return expenses.filter(item => isInCycle(item, selected));
+    }
+
+    function getCategoryStats(items) {
+      const map = {};
+      CATEGORIES.forEach(cat => map[cat] = { category: cat, amount: 0, count: 0 });
+      items.forEach(item => {
+        const cat = CATEGORIES.includes(item.category) ? item.category : "기타";
+        map[cat].amount += Number(item.amount || 0);
+        map[cat].count += 1;
+      });
+      return Object.values(map).filter(row => row.amount > 0).sort((a, b) => b.amount - a.amount);
+    }
+
+    function getDailyStats(items) {
+      const map = {};
+      items.forEach(item => {
+        if (!map[item.date]) map[item.date] = { label: formatDate(item.date).slice(5), date: item.date, amount: 0, count: 0 };
+        map[item.date].amount += Number(item.amount || 0);
+        map[item.date].count += 1;
+      });
+      return Object.values(map).sort((a, b) => a.date.localeCompare(b.date));
+    }
+
+    function renderStats() {
+      const items = getStatsItems();
+      const total = sum(items);
+      const categoryRows = getCategoryStats(items);
+      const top = categoryRows[0];
+
+      statsTotal.textContent = formatWon(total);
+      statsTopCategory.textContent = top ? `${top.category} ${formatWon(top.amount)}` : "-";
+
+      if (!categoryRows.length) {
+        categoryStatsList.innerHTML = `<div class="empty">통계로 표시할 지출 내역이 없습니다.</div>`;
+      } else {
+        const max = Math.max(...categoryRows.map(row => row.amount), 1);
+        categoryStatsList.innerHTML = categoryRows.map(row => {
+          const percent = total ? Math.round(row.amount / total * 100) : 0;
+          const width = Math.max(3, Math.round(row.amount / max * 100));
+          return `
+            <div class="bar-row">
+              <div class="bar-head">
+                <span>${escapeHTML(row.category)} <span class="bar-meta">${row.count}건 · ${percent}%</span></span>
+                <span>${formatWon(row.amount)}</span>
+              </div>
+              <div class="bar-track"><div class="bar-fill" style="width:${width}%"></div></div>
+            </div>`;
+        }).join("");
       }
+
+      const rowsForChart = chartType.value === "daily" ? getDailyStats(items) : categoryRows;
+      drawChart(rowsForChart, chartType.value);
+    }
+
+    function drawChart(rows, type) {
+      const canvas = expenseChart;
+      const ctx = canvas.getContext("2d");
+      const rect = canvas.getBoundingClientRect();
+      const ratio = window.devicePixelRatio || 1;
+      canvas.width = Math.max(320, rect.width) * ratio;
+      canvas.height = 300 * ratio;
+      ctx.setTransform(ratio, 0, 0, ratio, 0, 0);
+
+      const width = canvas.width / ratio;
+      const height = canvas.height / ratio;
+      ctx.clearRect(0, 0, width, height);
+
+      ctx.fillStyle = "#fffdf9";
+      ctx.fillRect(0, 0, width, height);
+
+      if (!rows.length) {
+        ctx.fillStyle = "#767676";
+        ctx.font = "14px sans-serif";
+        ctx.textAlign = "center";
+        ctx.fillText("그래프로 표시할 데이터가 없습니다.", width / 2, height / 2);
+        return;
+      }
+
+      const chartRows = rows.slice(0, type === "daily" ? 12 : 7);
+      const padding = { top: 24, right: 18, bottom: 54, left: 58 };
+      const chartW = width - padding.left - padding.right;
+      const chartH = height - padding.top - padding.bottom;
+      const max = Math.max(...chartRows.map(row => row.amount), 1);
+
+      ctx.strokeStyle = "#e8e2d8";
+      ctx.lineWidth = 1;
+      for (let i = 0; i <= 4; i++) {
+        const y = padding.top + chartH * (i / 4);
+        ctx.beginPath();
+        ctx.moveTo(padding.left, y);
+        ctx.lineTo(width - padding.right, y);
+        ctx.stroke();
+
+        const value = max * (1 - i / 4);
+        ctx.fillStyle = "#767676";
+        ctx.font = "11px sans-serif";
+        ctx.textAlign = "right";
+        ctx.fillText(shortWon(value), padding.left - 8, y + 4);
+      }
+
+      const gap = 9;
+      const barW = Math.max(12, (chartW - gap * (chartRows.length - 1)) / chartRows.length);
+
+      chartRows.forEach((row, index) => {
+        const x = padding.left + index * (barW + gap);
+        const barH = chartH * (row.amount / max);
+        const y = padding.top + chartH - barH;
+
+        const grad = ctx.createLinearGradient(0, y, 0, padding.top + chartH);
+        grad.addColorStop(0, "#111827");
+        grad.addColorStop(1, "#3f4f76");
+        ctx.fillStyle = grad;
+        roundRect(ctx, x, y, barW, barH, 8);
+        ctx.fill();
+
+        ctx.fillStyle = "#151515";
+        ctx.font = "11px sans-serif";
+        ctx.textAlign = "center";
+        const label = type === "daily" ? row.label : row.category;
+        ctx.save();
+        ctx.translate(x + barW / 2, height - 36);
+        ctx.rotate(chartRows.length > 5 ? -0.48 : 0);
+        ctx.fillText(label.length > 6 ? label.slice(0, 6) : label, 0, 0);
+        ctx.restore();
+
+        ctx.fillStyle = "#767676";
+        ctx.font = "10px sans-serif";
+        ctx.textAlign = "center";
+        ctx.fillText(shortWon(row.amount), x + barW / 2, Math.max(14, y - 7));
+      });
+    }
+
+    function roundRect(ctx, x, y, w, h, r) {
+      const radius = Math.min(r, w / 2, h / 2);
+      ctx.beginPath();
+      ctx.moveTo(x + radius, y);
+      ctx.lineTo(x + w - radius, y);
+      ctx.quadraticCurveTo(x + w, y, x + w, y + radius);
+      ctx.lineTo(x + w, y + h);
+      ctx.lineTo(x, y + h);
+      ctx.lineTo(x, y + radius);
+      ctx.quadraticCurveTo(x, y, x + radius, y);
+      ctx.closePath();
+    }
+
+    function shortWon(value) {
+      const n = Number(value || 0);
+      if (n >= 100000000) return `${Math.round(n / 100000000)}억`;
+      if (n >= 10000) return `${Math.round(n / 10000)}만`;
+      return `${Math.round(n).toLocaleString("ko-KR")}`;
+    }
+
+    function switchView(view) {
+      const map = {
+        main: [mainView, mainViewBtn],
+        calendar: [calendarView, calendarViewBtn],
+        stats: [statsView, statsViewBtn],
+        recurring: [recurringView, recurringViewBtn]
+      };
+
+      Object.entries(map).forEach(([key, pair]) => {
+        pair[0].classList.toggle("hidden", key !== view);
+        pair[1].classList.toggle("active", key === view);
+      });
+
+      if (view === "calendar") renderCalendar();
+      if (view === "stats") renderStats();
+      if (view === "recurring") renderRecurringList();
+      window.scrollTo({ top: 0, behavior: "smooth" });
     }
 
     function render() {
-      saveExpenses();
+      saveAll();
       updateSummary();
-      updateMonthFilter();
+      updateFilters();
       renderList();
       renderCalendar();
+      renderStats();
+      renderRecurringList();
+    }
+
+    function applyRecurringForMonth(month = monthKey(todayISO()), manual = false) {
+      if (!recurringRules.length) {
+        if (manual) showToast("등록된 고정지출이 없습니다.");
+        return 0;
+      }
+
+      const [year, monthNumber] = month.split("-").map(Number);
+      const lastDay = new Date(year, monthNumber, 0).getDate();
+      let added = 0;
+
+      recurringRules.forEach(rule => {
+        if (rule.disabled) return;
+        if (rule.startMonth && rule.startMonth > month) return;
+
+        const day = Math.min(Number(rule.day || 1), lastDay);
+        const date = `${month}-${String(day).padStart(2, "0")}`;
+        const recurringKey = `${rule.id}_${month}`;
+
+        const exists = expenses.some(item => item.recurringKey === recurringKey);
+        if (exists) return;
+
+        expenses.push({
+          id: createId(),
+          date,
+          category: rule.category || "기타",
+          place: rule.place,
+          amount: Number(rule.amount || 0),
+          note: rule.note || "",
+          recurringRuleId: rule.id,
+          recurringKey,
+          createdAt: Date.now()
+        });
+        added += 1;
+      });
+
+      if (added > 0) {
+        saveAll();
+        if (manual) showToast(`${added}개 고정지출을 입력했습니다.`);
+      } else if (manual) {
+        showToast("이번 달 고정지출은 이미 입력되어 있습니다.");
+      }
+      return added;
+    }
+
+    function renderRecurringList() {
+      if (!recurringRules.length) {
+        recurringList.innerHTML = `<div class="empty">등록된 고정지출이 없습니다.</div>`;
+        return;
+      }
+
+      recurringList.innerHTML = recurringRules.map(rule => `
+        <article class="item">
+          <div class="item-main">
+            <div>
+              <div class="item-title">${escapeHTML(rule.place)}</div>
+              <div class="item-meta">매월 ${rule.day}일 · ${escapeHTML(rule.category)} · 시작 ${rule.startMonth || "-"}</div>
+            </div>
+            <div class="item-amount">${formatWon(rule.amount)}</div>
+          </div>
+          ${rule.note ? `<div class="item-note">${escapeHTML(rule.note)}</div>` : ""}
+          <div class="item-actions">
+            <button class="btn ghost small" type="button" onclick="startRecurringEdit('${rule.id}')">수정</button>
+            <button class="btn danger small" type="button" onclick="deleteRecurring('${rule.id}')">삭제</button>
+          </div>
+        </article>
+      `).join("");
     }
 
     form.addEventListener("submit", (event) => {
       event.preventDefault();
+
       const amount = Number(amountInput.value);
       if (!amount || amount < 1) {
         showToast("금액을 확인해 주세요.");
@@ -991,11 +1607,7 @@
         resetForm();
         showToast("수정되었습니다.");
       } else {
-        expenses.push({
-          id: crypto.randomUUID ? crypto.randomUUID() : String(Date.now() + Math.random()),
-          ...payload,
-          createdAt: Date.now()
-        });
+        expenses.push({ id: createId(), ...payload, createdAt: Date.now() });
         selectedDate = payload.date;
         placeInput.value = "";
         amountInput.value = "";
@@ -1046,10 +1658,107 @@
       showToast("삭제되었습니다.");
     }
 
+    recurringForm.addEventListener("submit", (event) => {
+      event.preventDefault();
+
+      const amount = Number(recurringAmount.value);
+      if (!amount || amount < 1) {
+        showToast("금액을 확인해 주세요.");
+        return;
+      }
+
+      const payload = {
+        place: recurringPlace.value.trim(),
+        amount,
+        category: recurringCategory.value,
+        day: Number(recurringDay.value),
+        startMonth: recurringStartMonth.value || monthKey(todayISO()),
+        note: recurringNote.value.trim()
+      };
+
+      if (!payload.place) {
+        showToast("고정지출명을 입력해 주세요.");
+        return;
+      }
+
+      if (recurringEditId.value) {
+        recurringRules = recurringRules.map(rule => rule.id === recurringEditId.value ? { ...rule, ...payload, updatedAt: Date.now() } : rule);
+        resetRecurringForm();
+        showToast("고정지출이 수정되었습니다.");
+      } else {
+        recurringRules.push({ id: createId(), ...payload, createdAt: Date.now() });
+        resetRecurringForm();
+        showToast("고정지출이 저장되었습니다.");
+      }
+
+      saveAll();
+      applyRecurringForMonth(monthKey(todayISO()), false);
+      render();
+    });
+
+    function startRecurringEdit(id) {
+      const rule = recurringRules.find(x => x.id === id);
+      if (!rule) return;
+      recurringEditId.value = rule.id;
+      recurringPlace.value = rule.place;
+      recurringAmount.value = rule.amount;
+      recurringCategory.value = rule.category;
+      recurringDay.value = String(rule.day || 1);
+      recurringStartMonth.value = rule.startMonth || monthKey(todayISO());
+      recurringNote.value = rule.note || "";
+      recurringSubmitBtn.textContent = "고정지출 수정 저장";
+      recurringFormTitle.textContent = "고정지출 수정";
+      cancelRecurringEditBtn.style.display = "inline-block";
+      window.scrollTo({ top: 0, behavior: "smooth" });
+    }
+
+    function resetRecurringForm() {
+      recurringEditId.value = "";
+      recurringPlace.value = "";
+      recurringAmount.value = "";
+      recurringCategory.value = "구독/통신";
+      recurringDay.value = "1";
+      recurringStartMonth.value = monthKey(todayISO());
+      recurringNote.value = "";
+      recurringSubmitBtn.textContent = "고정지출 저장";
+      recurringFormTitle.textContent = "고정지출 추가";
+      cancelRecurringEditBtn.style.display = "none";
+    }
+
+    function deleteRecurring(id) {
+      const rule = recurringRules.find(x => x.id === id);
+      if (!rule) return;
+      const ok = confirm(`'${rule.place}' 고정지출을 삭제할까요? 이미 생성된 지출 내역은 유지됩니다.`);
+      if (!ok) return;
+      recurringRules = recurringRules.filter(x => x.id !== id);
+      render();
+      showToast("고정지출이 삭제되었습니다.");
+    }
+
+    cancelRecurringEditBtn.addEventListener("click", resetRecurringForm);
+    $("applyRecurringBtn").addEventListener("click", () => {
+      applyRecurringForMonth(monthKey(todayISO()), true);
+      render();
+    });
+
+    cycleStartDay.addEventListener("change", () => {
+      cycleStartDayValue = Number(cycleStartDay.value || "1");
+      localStorage.setItem(CYCLE_START_KEY, String(cycleStartDayValue));
+      updateFilters();
+      render();
+      showToast("지출 기준일이 저장되었습니다.");
+    });
+
     filterMonth.addEventListener("change", renderList);
     filterCategory.addEventListener("change", renderList);
+    searchInput.addEventListener("input", renderList);
+    statsMonth.addEventListener("change", renderStats);
+    chartType.addEventListener("change", renderStats);
+
     mainViewBtn.addEventListener("click", () => switchView("main"));
     calendarViewBtn.addEventListener("click", () => switchView("calendar"));
+    statsViewBtn.addEventListener("click", () => switchView("stats"));
+    recurringViewBtn.addEventListener("click", () => switchView("recurring"));
 
     $("prevMonthBtn").addEventListener("click", () => {
       calendarMonth -= 1;
@@ -1113,7 +1822,7 @@
           const imported = body
             .filter(row => row.length >= 4)
             .map(row => ({
-              id: crypto.randomUUID ? crypto.randomUUID() : String(Date.now() + Math.random()),
+              id: createId(),
               date: row[0] || todayISO(),
               category: row[1] || "기타",
               place: row[2] || "불러온 내역",
@@ -1179,13 +1888,10 @@
       const sample = [
         { date: today, category: "식비", place: "점심", amount: 9500, note: "" },
         { date: today, category: "카페/간식", place: "커피", amount: 4800, note: "" },
+        { date: today, category: "쇼핑", place: "온라인 쇼핑", amount: 32000, note: "" },
         { date: yesterdayLocal, category: "교통", place: "버스", amount: 1500, note: "" },
         { date: yesterdayLocal, category: "생활용품", place: "마트", amount: 18200, note: "생필품" }
-      ].map(item => ({
-        id: crypto.randomUUID ? crypto.randomUUID() : String(Date.now() + Math.random()),
-        ...item,
-        createdAt: Date.now()
-      }));
+      ].map(item => ({ id: createId(), ...item, createdAt: Date.now() }));
       expenses = [...expenses, ...sample];
       render();
       showToast("예시 데이터를 추가했습니다.");
@@ -1204,8 +1910,17 @@
       showToast("전체 삭제되었습니다.");
     });
 
+    function createId() {
+      return crypto.randomUUID ? crypto.randomUUID() : String(Date.now() + Math.random());
+    }
+
+    window.addEventListener("resize", () => {
+      if (!statsView.classList.contains("hidden")) renderStats();
+    });
+
     setTodayUI();
-    updateMonthFilter();
+    applyRecurringForMonth(monthKey(todayISO()), false);
+    updateFilters();
     render();
   </script>
 </body>
