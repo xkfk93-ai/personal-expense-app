@@ -334,6 +334,26 @@
       flex-wrap: wrap;
     }
 
+    .list-more-btn {
+      justify-self: center;
+      min-height: auto;
+      padding: 9px 14px;
+      margin-top: 2px;
+      font-size: 13px;
+    }
+
+    .category-pill {
+      display: inline-flex;
+      align-items: center;
+      border-radius: 999px;
+      padding: 4px 8px;
+      font-size: 11px;
+      font-weight: 800;
+      background: #f0ece3;
+      color: var(--muted);
+      margin-left: 6px;
+    }
+
     .empty {
       padding: 28px 12px;
       text-align: center;
@@ -402,27 +422,39 @@
 
     .calendar-week {
       display: grid;
-      grid-template-columns: repeat(7, 1fr);
+      grid-template-columns: repeat(7, minmax(0, 1fr));
       gap: 6px;
       margin-bottom: 7px;
       color: var(--muted);
       font-size: 12px;
       text-align: center;
       font-weight: 700;
+      max-width: 100%;
+      overflow: hidden;
+    }
+
+    .calendar-week > div {
+      min-width: 0;
     }
 
     .calendar-grid {
       display: grid;
-      grid-template-columns: repeat(7, 1fr);
+      grid-template-columns: repeat(7, minmax(0, 1fr));
       gap: 6px;
+      max-width: 100%;
+      overflow: hidden;
     }
 
     .day {
       min-height: 76px;
+      min-width: 0;
+      width: 100%;
+      max-width: 100%;
+      overflow: hidden;
       border: 1px solid var(--line);
       background: #fffdf9;
       border-radius: 14px;
-      padding: 8px 7px;
+      padding: 8px 6px;
       cursor: pointer;
       display: flex;
       flex-direction: column;
@@ -454,11 +486,15 @@
     }
 
     .day-amount {
-      font-size: 11px;
+      font-size: clamp(9px, 2.4vw, 11px);
       color: var(--good);
       font-weight: 900;
       line-height: 1.2;
       word-break: keep-all;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      max-width: 100%;
     }
 
     .day.selected .day-amount {
@@ -884,6 +920,30 @@
         </div>
         <div class="list" id="recurringList"></div>
       </section>
+
+      <section class="card">
+        <div class="card-title">
+          <h2 id="categoryFormTitle">카테고리 관리</h2>
+          <button class="btn ghost small" id="cancelCategoryEditBtn" type="button" style="display:none;">수정 취소</button>
+        </div>
+
+        <form class="form" id="categoryForm">
+          <input type="hidden" id="categoryOriginalName" />
+          <div class="row two">
+            <div class="field">
+              <label for="categoryName">카테고리명</label>
+              <input id="categoryName" type="text" placeholder="예: 의료비, 취미, 반려동물" required />
+            </div>
+            <button class="btn" type="submit" id="categorySubmitBtn">카테고리 추가</button>
+          </div>
+        </form>
+
+        <p class="notice">
+          카테고리를 수정하면 기존 지출 내역과 고정지출에 적용된 카테고리 이름도 함께 변경됩니다.
+        </p>
+
+        <div class="list" id="categoryList"></div>
+      </section>
     </section>
 
     <div class="footer">
@@ -897,7 +957,9 @@
     const STORAGE_KEY = "personal-expense-app-v1";
     const RECURRING_KEY = "personal-expense-recurring-v1";
     const CYCLE_START_KEY = "personal-expense-cycle-start-day-v1";
-    const CATEGORIES = ["식비", "카페/간식", "교통", "쇼핑", "생활용품", "구독/통신", "기타"];
+    const CATEGORIES_KEY = "personal-expense-categories-v1";
+    const DEFAULT_CATEGORIES = ["식비", "카페/간식", "교통", "쇼핑", "생활용품", "구독/통신", "기타"];
+    let CATEGORIES = normalizeCategoryList(loadJSON(CATEGORIES_KEY, DEFAULT_CATEGORIES));
 
     const $ = (id) => document.getElementById(id);
 
@@ -959,8 +1021,18 @@
     const cancelRecurringEditBtn = $("cancelRecurringEditBtn");
     const recurringList = $("recurringList");
 
+    const categoryForm = $("categoryForm");
+    const categoryOriginalName = $("categoryOriginalName");
+    const categoryName = $("categoryName");
+    const categorySubmitBtn = $("categorySubmitBtn");
+    const categoryFormTitle = $("categoryFormTitle");
+    const cancelCategoryEditBtn = $("cancelCategoryEditBtn");
+    const categoryList = $("categoryList");
+
     let expenses = loadJSON(STORAGE_KEY, []);
     let recurringRules = loadJSON(RECURRING_KEY, []);
+    syncCategoriesFromData();
+    let expenseListExpanded = false;
     let cycleStartDayValue = Number(localStorage.getItem(CYCLE_START_KEY) || "1");
     if (!cycleStartDayValue || cycleStartDayValue < 1 || cycleStartDayValue > 31) cycleStartDayValue = 1;
     let calendarYear;
@@ -1082,6 +1154,16 @@
       return number.toLocaleString("ko-KR") + "원";
     }
 
+    function formatCalendarWon(value) {
+      const n = Number(value || 0);
+      if (n >= 100000000) return `${Math.round(n / 100000000)}억원`;
+      if (n >= 10000) {
+        const v = n < 100000 ? (n / 10000).toFixed(1).replace(/\.0$/, "") : Math.round(n / 10000);
+        return `${v}만원`;
+      }
+      return `${Math.round(n).toLocaleString("ko-KR")}원`;
+    }
+
     function escapeHTML(text) {
       return String(text ?? "")
         .replaceAll("&", "&amp;")
@@ -1106,9 +1188,64 @@
       }
     }
 
+    function normalizeCategoryList(list) {
+      const source = Array.isArray(list) ? list : DEFAULT_CATEGORIES;
+      const cleaned = [];
+      source.forEach(name => {
+        const value = String(name || "").trim();
+        if (value && !cleaned.includes(value)) cleaned.push(value);
+      });
+      if (!cleaned.length) DEFAULT_CATEGORIES.forEach(name => cleaned.push(name));
+      if (!cleaned.includes("기타")) cleaned.push("기타");
+      return cleaned;
+    }
+
+    function syncCategoriesFromData() {
+      CATEGORIES = normalizeCategoryList(CATEGORIES);
+      [...expenses, ...recurringRules].forEach(item => {
+        const value = String(item.category || "").trim();
+        if (value && !CATEGORIES.includes(value)) CATEGORIES.push(value);
+      });
+      localStorage.setItem(CATEGORIES_KEY, JSON.stringify(CATEGORIES));
+    }
+
+    function populateSelect(selectEl, selectedValue, includeAll = false) {
+      if (!selectEl) return;
+      const selected = selectedValue || selectEl.value;
+      selectEl.innerHTML = "";
+
+      if (includeAll) {
+        const allOption = document.createElement("option");
+        allOption.value = "전체";
+        allOption.textContent = "전체 카테고리";
+        selectEl.appendChild(allOption);
+      }
+
+      CATEGORIES.forEach(name => {
+        const option = document.createElement("option");
+        option.value = name;
+        option.textContent = name;
+        selectEl.appendChild(option);
+      });
+
+      const fallback = includeAll ? "전체" : (CATEGORIES.includes("식비") ? "식비" : CATEGORIES[0]);
+      selectEl.value = [...selectEl.options].some(option => option.value === selected) ? selected : fallback;
+    }
+
+    function updateCategoryOptions() {
+      populateSelect(categoryInput, categoryInput.value, false);
+      populateSelect(filterCategory, filterCategory.value || "전체", true);
+      populateSelect(recurringCategory, recurringCategory.value || "구독/통신", false);
+    }
+
+    function getDefaultCategory(preferred = "식비") {
+      return CATEGORIES.includes(preferred) ? preferred : (CATEGORIES[0] || "기타");
+    }
+
     function saveAll() {
       localStorage.setItem(STORAGE_KEY, JSON.stringify(expenses));
       localStorage.setItem(RECURRING_KEY, JSON.stringify(recurringRules));
+      localStorage.setItem(CATEGORIES_KEY, JSON.stringify(CATEGORIES));
     }
 
     function sum(items) {
@@ -1127,6 +1264,7 @@
       recurringStartMonth.value = monthKey(todayISO());
       fillCycleStartDays();
       fillRecurringDays();
+      updateCategoryOptions();
       updateCycleSettingText();
     }
 
@@ -1256,7 +1394,27 @@
         expenseList.innerHTML = `<div class="empty">표시할 지출 내역이 없습니다.</div>`;
         return;
       }
-      expenseList.innerHTML = items.map(item => renderExpenseItem(item, true)).join("");
+
+      const limit = 10;
+      const visibleItems = expenseListExpanded ? items : items.slice(0, limit);
+      let html = visibleItems.map(item => renderExpenseItem(item, true)).join("");
+
+      if (items.length > limit) {
+        const remaining = items.length - limit;
+        html += `<button class="btn ghost small list-more-btn" type="button" onclick="toggleExpenseList()">${expenseListExpanded ? "접기" : `더 보기 ${remaining}개`}</button>`;
+      }
+
+      expenseList.innerHTML = html;
+    }
+
+    function toggleExpenseList() {
+      expenseListExpanded = !expenseListExpanded;
+      renderList();
+    }
+
+    function resetExpenseListView() {
+      expenseListExpanded = false;
+      renderList();
     }
 
     function getDailyItems(dateString) {
@@ -1299,7 +1457,7 @@
           <button class="${classes}" type="button" onclick="selectCalendarDate('${cell.dateString}')">
             <span class="day-num">${cell.day}</span>
             <span>
-              ${total > 0 ? `<div class="day-amount">${formatWon(total)}</div>` : `<div class="day-amount">&nbsp;</div>`}
+              ${total > 0 ? `<div class="day-amount">${formatCalendarWon(total)}</div>` : `<div class="day-amount">&nbsp;</div>`}
               ${dayItems.length ? `<div class="day-count">${dayItems.length}건</div>` : `<div class="day-count">&nbsp;</div>`}
             </span>
           </button>`;
@@ -1498,18 +1656,24 @@
 
       if (view === "calendar") renderCalendar();
       if (view === "stats") renderStats();
-      if (view === "recurring") renderRecurringList();
+      if (view === "recurring") {
+        renderRecurringList();
+        renderCategoryList();
+      }
       window.scrollTo({ top: 0, behavior: "smooth" });
     }
 
     function render() {
+      syncCategoriesFromData();
       saveAll();
+      updateCategoryOptions();
       updateSummary();
       updateFilters();
       renderList();
       renderCalendar();
       renderStats();
       renderRecurringList();
+      renderCategoryList();
     }
 
     function applyRecurringForMonth(month = monthKey(todayISO()), manual = false) {
@@ -1580,6 +1744,33 @@
       `).join("");
     }
 
+    function renderCategoryList() {
+      if (!categoryList) return;
+      if (!CATEGORIES.length) {
+        categoryList.innerHTML = `<div class="empty">등록된 카테고리가 없습니다.</div>`;
+        return;
+      }
+
+      categoryList.innerHTML = CATEGORIES.map((name, index) => {
+        const expenseCount = expenses.filter(item => item.category === name).length;
+        const recurringCount = recurringRules.filter(rule => rule.category === name).length;
+        const locked = name === "기타" || CATEGORIES.length <= 1;
+        return `
+          <article class="item">
+            <div class="item-main">
+              <div>
+                <div class="item-title">${escapeHTML(name)}${name === "기타" ? `<span class="category-pill">기본</span>` : ""}</div>
+                <div class="item-meta">지출 ${expenseCount}건 · 고정지출 ${recurringCount}건</div>
+              </div>
+            </div>
+            <div class="item-actions">
+              <button class="btn ghost small" type="button" onclick="startCategoryEditByIndex(${index})">수정</button>
+              <button class="btn danger small" type="button" onclick="deleteCategoryByIndex(${index})" ${locked ? "disabled" : ""}>삭제</button>
+            </div>
+          </article>`;
+      }).join("");
+    }
+
     form.addEventListener("submit", (event) => {
       event.preventDefault();
 
@@ -1637,7 +1828,7 @@
     function resetForm() {
       editId.value = "";
       dateInput.value = todayISO();
-      categoryInput.value = "식비";
+      categoryInput.value = getDefaultCategory("식비");
       placeInput.value = "";
       amountInput.value = "";
       noteInput.value = "";
@@ -1657,6 +1848,80 @@
       render();
       showToast("삭제되었습니다.");
     }
+
+    categoryForm.addEventListener("submit", (event) => {
+      event.preventDefault();
+      const newName = categoryName.value.trim();
+      const oldName = categoryOriginalName.value;
+
+      if (!newName) {
+        showToast("카테고리명을 입력해 주세요.");
+        return;
+      }
+
+      if (newName === "전체") {
+        showToast("'전체'는 카테고리명으로 사용할 수 없습니다.");
+        return;
+      }
+
+      if (oldName) {
+        if (newName !== oldName && CATEGORIES.includes(newName)) {
+          showToast("이미 있는 카테고리입니다.");
+          return;
+        }
+        CATEGORIES = CATEGORIES.map(name => name === oldName ? newName : name);
+        expenses = expenses.map(item => item.category === oldName ? { ...item, category: newName } : item);
+        recurringRules = recurringRules.map(rule => rule.category === oldName ? { ...rule, category: newName } : rule);
+        resetCategoryForm();
+        showToast("카테고리가 수정되었습니다.");
+      } else {
+        if (CATEGORIES.includes(newName)) {
+          showToast("이미 있는 카테고리입니다.");
+          return;
+        }
+        CATEGORIES.push(newName);
+        categoryName.value = "";
+        showToast("카테고리가 추가되었습니다.");
+      }
+
+      CATEGORIES = normalizeCategoryList(CATEGORIES);
+      render();
+    });
+
+    function startCategoryEditByIndex(index) {
+      const name = CATEGORIES[index];
+      if (!name) return;
+      categoryOriginalName.value = name;
+      categoryName.value = name;
+      categorySubmitBtn.textContent = "카테고리 수정 저장";
+      categoryFormTitle.textContent = "카테고리 수정";
+      cancelCategoryEditBtn.style.display = "inline-block";
+      categoryName.focus();
+    }
+
+    function resetCategoryForm() {
+      categoryOriginalName.value = "";
+      categoryName.value = "";
+      categorySubmitBtn.textContent = "카테고리 추가";
+      categoryFormTitle.textContent = "카테고리 관리";
+      cancelCategoryEditBtn.style.display = "none";
+    }
+
+    function deleteCategoryByIndex(index) {
+      const name = CATEGORIES[index];
+      if (!name || name === "기타" || CATEGORIES.length <= 1) return;
+      const ok = confirm(`'${name}' 카테고리를 삭제할까요? 기존 지출과 고정지출은 '기타'로 변경됩니다.`);
+      if (!ok) return;
+      CATEGORIES = CATEGORIES.filter((_, i) => i !== index);
+      if (!CATEGORIES.includes("기타")) CATEGORIES.push("기타");
+      expenses = expenses.map(item => item.category === name ? { ...item, category: "기타" } : item);
+      recurringRules = recurringRules.map(rule => rule.category === name ? { ...rule, category: "기타" } : rule);
+      resetCategoryForm();
+      render();
+      showToast("카테고리가 삭제되었습니다.");
+    }
+
+    cancelCategoryEditBtn.addEventListener("click", resetCategoryForm);
 
     recurringForm.addEventListener("submit", (event) => {
       event.preventDefault();
@@ -1716,7 +1981,7 @@
       recurringEditId.value = "";
       recurringPlace.value = "";
       recurringAmount.value = "";
-      recurringCategory.value = "구독/통신";
+      recurringCategory.value = getDefaultCategory("구독/통신");
       recurringDay.value = "1";
       recurringStartMonth.value = monthKey(todayISO());
       recurringNote.value = "";
@@ -1749,9 +2014,9 @@
       showToast("지출 기준일이 저장되었습니다.");
     });
 
-    filterMonth.addEventListener("change", renderList);
-    filterCategory.addEventListener("change", renderList);
-    searchInput.addEventListener("input", renderList);
+    filterMonth.addEventListener("change", resetExpenseListView);
+    filterCategory.addEventListener("change", resetExpenseListView);
+    searchInput.addEventListener("input", resetExpenseListView);
     statsMonth.addEventListener("change", renderStats);
     chartType.addEventListener("change", renderStats);
 
@@ -1920,6 +2185,7 @@
 
     setTodayUI();
     applyRecurringForMonth(monthKey(todayISO()), false);
+    updateCategoryOptions();
     updateFilters();
     render();
   </script>
