@@ -4,6 +4,7 @@
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
   <meta name="theme-color" content="#111827" />
+  <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate" />
   <meta name="description" content="개인용 지출 기록장 - 지출 입력, 캘린더, 통계, 그래프, 고정지출, 검색 기능을 제공하는 설치형 웹앱" />
   <link rel="manifest" href="./manifest.webmanifest" />
   <link rel="apple-touch-icon" href="./icons/icon-192.png" />
@@ -334,12 +335,19 @@
       flex-wrap: wrap;
     }
 
-    .list-more-btn {
-      justify-self: center;
+    .list-more-actions {
+      display: flex;
+      justify-content: center;
+      gap: 8px;
+      margin-top: 12px;
+      flex-wrap: wrap;
+    }
+
+    .list-more-actions .btn {
       min-height: auto;
-      padding: 9px 14px;
-      margin-top: 2px;
-      font-size: 13px;
+      padding: 8px 12px;
+      border-radius: 999px;
+      font-size: 12px;
     }
 
     .category-pill {
@@ -768,7 +776,6 @@
         <div class="actions">
           <button class="btn secondary" type="button" id="exportBtn">CSV 내보내기</button>
           <button class="btn secondary" type="button" id="importBtn">CSV 불러오기</button>
-          <button class="btn ghost" type="button" id="sampleBtn">예시 데이터 넣기</button>
           <button class="btn danger" type="button" id="clearBtn">전체 삭제</button>
         </div>
 
@@ -947,7 +954,7 @@
     </section>
 
     <div class="footer">
-      개인용 설치형 웹앱 · 데이터는 사용자의 기기에 저장됩니다.
+      개인용 설치형 웹앱 · 데이터는 사용자의 기기에 저장됩니다. · v4.2 수정본
     </div>
   </main>
 
@@ -1032,7 +1039,7 @@
     let expenses = loadJSON(STORAGE_KEY, []);
     let recurringRules = loadJSON(RECURRING_KEY, []);
     syncCategoriesFromData();
-    let expenseListExpanded = false;
+    let visibleExpenseCount = 5;
     let cycleStartDayValue = Number(localStorage.getItem(CYCLE_START_KEY) || "1");
     if (!cycleStartDayValue || cycleStartDayValue < 1 || cycleStartDayValue > 31) cycleStartDayValue = 1;
     let calendarYear;
@@ -1390,30 +1397,53 @@
 
     function renderList() {
       const items = getFilteredExpenses();
+
       if (!items.length) {
         expenseList.innerHTML = `<div class="empty">표시할 지출 내역이 없습니다.</div>`;
         return;
       }
 
-      const limit = 10;
-      const visibleItems = expenseListExpanded ? items : items.slice(0, limit);
-      let html = visibleItems.map(item => renderExpenseItem(item, true)).join("");
+      const visibleItems = items.slice(0, visibleExpenseCount);
+      const hasMore = items.length > visibleExpenseCount;
+      const remaining = Math.max(0, items.length - visibleExpenseCount);
 
-      if (items.length > limit) {
-        const remaining = items.length - limit;
-        html += `<button class="btn ghost small list-more-btn" type="button" onclick="toggleExpenseList()">${expenseListExpanded ? "접기" : `더 보기 ${remaining}개`}</button>`;
+      let controls = "";
+
+      if (hasMore) {
+        controls = `
+          <div class="list-more-actions">
+            <button class="btn ghost" type="button" onclick="showMoreExpenses()">5개 더 보기${remaining ? ` · 남은 ${remaining}개` : ""}</button>
+            <button class="btn ghost" type="button" onclick="showAllExpenses()">전체 보기</button>
+          </div>
+        `;
+      } else if (items.length > 5) {
+        controls = `
+          <div class="list-more-actions">
+            <button class="btn ghost" type="button" onclick="collapseExpenses()">5개만 보기</button>
+          </div>
+        `;
       }
 
-      expenseList.innerHTML = html;
+      expenseList.innerHTML = visibleItems.map(item => renderExpenseItem(item, true)).join("") + controls;
     }
 
-    function toggleExpenseList() {
-      expenseListExpanded = !expenseListExpanded;
+    function showMoreExpenses() {
+      visibleExpenseCount += 5;
+      renderList();
+    }
+
+    function showAllExpenses() {
+      visibleExpenseCount = getFilteredExpenses().length;
+      renderList();
+    }
+
+    function collapseExpenses() {
+      visibleExpenseCount = 5;
       renderList();
     }
 
     function resetExpenseListView() {
-      expenseListExpanded = false;
+      visibleExpenseCount = 5;
       renderList();
     }
 
@@ -2143,24 +2173,6 @@
       if (row.some(v => v !== "")) rows.push(row);
       return rows;
     }
-
-    $("sampleBtn").addEventListener("click", () => {
-      if (expenses.length && !confirm("예시 데이터를 추가할까요? 기존 내역은 유지됩니다.")) return;
-      const today = todayISO();
-      const yesterdayDate = new Date();
-      yesterdayDate.setDate(yesterdayDate.getDate() - 1);
-      const yesterdayLocal = new Date(yesterdayDate.getTime() - yesterdayDate.getTimezoneOffset() * 60000).toISOString().slice(0, 10);
-      const sample = [
-        { date: today, category: "식비", place: "점심", amount: 9500, note: "" },
-        { date: today, category: "카페/간식", place: "커피", amount: 4800, note: "" },
-        { date: today, category: "쇼핑", place: "온라인 쇼핑", amount: 32000, note: "" },
-        { date: yesterdayLocal, category: "교통", place: "버스", amount: 1500, note: "" },
-        { date: yesterdayLocal, category: "생활용품", place: "마트", amount: 18200, note: "생필품" }
-      ].map(item => ({ id: createId(), ...item, createdAt: Date.now() }));
-      expenses = [...expenses, ...sample];
-      render();
-      showToast("예시 데이터를 추가했습니다.");
-    });
 
     $("clearBtn").addEventListener("click", () => {
       if (!expenses.length) {
