@@ -1,0 +1,93 @@
+<!doctype html>
+<html lang="ko">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>개인 지출 기록장 캐시 복구</title>
+  <style>
+    body {
+      margin: 0;
+      padding: 28px 16px;
+      background: #f6f4ef;
+      color: #151515;
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Noto Sans KR", sans-serif;
+    }
+    .box {
+      max-width: 560px;
+      margin: 0 auto;
+      background: #fff;
+      border: 1px solid #e8e2d8;
+      border-radius: 22px;
+      padding: 22px;
+      box-shadow: 0 14px 40px rgba(17,24,39,.08);
+    }
+    h1 {
+      margin: 0 0 10px;
+      font-size: 24px;
+      letter-spacing: -0.05em;
+    }
+    p {
+      color: #666;
+      line-height: 1.6;
+      font-size: 14px;
+    }
+    button {
+      width: 100%;
+      min-height: 52px;
+      border: 0;
+      border-radius: 16px;
+      background: #111827;
+      color: white;
+      font-size: 16px;
+      font-weight: 800;
+      margin-top: 12px;
+    }
+    .note {
+      margin-top: 14px;
+      font-size: 12px;
+      color: #777;
+    }
+  </style>
+</head>
+<body>
+  <main class="box">
+    <h1>앱 캐시 복구</h1>
+    <p>
+      이전 화면이 계속 보일 때 사용하는 복구 페이지입니다.
+      이 작업은 앱 캐시와 서비스워커만 초기화하며, 입력한 지출 데이터는 삭제하지 않습니다.
+    </p>
+    <button id="resetBtn">캐시 지우고 새 버전 열기</button>
+    <p class="note" id="status">버튼을 누른 뒤 자동으로 새 앱 화면으로 이동합니다.</p>
+  </main>
+
+  <script>
+    const statusEl = document.getElementById("status");
+
+    async function resetAppCache() {
+      try {
+        statusEl.textContent = "서비스워커 해제 중...";
+
+        if ("serviceWorker" in navigator) {
+          const registrations = await navigator.serviceWorker.getRegistrations();
+          await Promise.all(registrations.map(reg => reg.unregister()));
+        }
+
+        statusEl.textContent = "앱 캐시 삭제 중...";
+
+        if ("caches" in window) {
+          const names = await caches.keys();
+          await Promise.all(names.map(name => caches.delete(name)));
+        }
+
+        statusEl.textContent = "새 버전으로 이동 중...";
+        const target = "./index.html?recovered=" + Date.now();
+        location.replace(target);
+      } catch (error) {
+        statusEl.textContent = "자동 복구 중 오류가 났습니다. 브라우저 캐시를 직접 삭제한 뒤 다시 접속해 주세요.";
+      }
+    }
+
+    document.getElementById("resetBtn").addEventListener("click", resetAppCache);
+  </script>
+</body>
+</html>
