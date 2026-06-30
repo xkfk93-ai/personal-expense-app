@@ -1,4 +1,4 @@
-const CACHE_NAME = "personal-expense-pwa-v4-calendar-list-categories";
+const CACHE_NAME = "personal-expense-pwa-v5-total-notification";
 const FILES_TO_CACHE = [
   "./",
   "./index.html",
