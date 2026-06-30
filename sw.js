@@ -1,4 +1,4 @@
-const CACHE_NAME = "personal-expense-pwa-v5-total-notification";
+const CACHE_NAME = "personal-expense-pwa-v4-1-list5-no-sample";
 const FILES_TO_CACHE = [
   "./",
   "./index.html",

@@ -4,7 +4,7 @@
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
   <meta name="theme-color" content="#111827" />
-  <meta name="description" content="개인용 지출 기록장 - 지출 입력, 캘린더, 통계, 그래프, 고정지출, 검색, 전체 사용금액 알림 기능을 제공하는 설치형 웹앱" />
+  <meta name="description" content="개인용 지출 기록장 - 지출 입력, 캘린더, 통계, 그래프, 고정지출, 검색 기능을 제공하는 설치형 웹앱" />
   <link rel="manifest" href="./manifest.webmanifest" />
   <link rel="apple-touch-icon" href="./icons/icon-192.png" />
   <title>개인 지출 기록장</title>
@@ -778,31 +778,6 @@
           입력한 데이터는 이 브라우저/설치형 웹앱 내부에 저장됩니다. 휴대폰 변경, 브라우저 데이터 삭제 전에는 CSV로 백업해 주세요.
         </p>
       </section>
-
-      <section class="card">
-        <div class="card-title">
-          <h2>알림 설정</h2>
-        </div>
-
-        <div class="form">
-          <div class="field">
-            <label for="totalNotifyMode">전체 사용금액 알림</label>
-            <select id="totalNotifyMode">
-              <option value="off">자동 알림 끄기</option>
-              <option value="onOpen">앱 실행 시 하루 1번 표시</option>
-            </select>
-          </div>
-
-          <div class="actions">
-            <button class="btn secondary" type="button" id="notifyPermissionBtn">알림 권한 허용</button>
-            <button class="btn ghost" type="button" id="showTotalNotifyBtn">전체 사용금액 알림 띄우기</button>
-          </div>
-        </div>
-
-        <p class="notice">
-          알림창에는 전체 사용금액만 표시됩니다. GitHub Pages 웹앱 특성상 앱을 열었을 때 또는 버튼을 눌렀을 때 알림을 띄우는 방식입니다.
-        </p>
-      </section>
     </section>
 
     <section id="calendarView" class="hidden">
@@ -983,7 +958,6 @@
     const RECURRING_KEY = "personal-expense-recurring-v1";
     const CYCLE_START_KEY = "personal-expense-cycle-start-day-v1";
     const CATEGORIES_KEY = "personal-expense-categories-v1";
-    const NOTIFY_KEY = "personal-expense-total-notification-v1";
     const DEFAULT_CATEGORIES = ["식비", "카페/간식", "교통", "쇼핑", "생활용품", "구독/통신", "기타"];
     let CATEGORIES = normalizeCategoryList(loadJSON(CATEGORIES_KEY, DEFAULT_CATEGORIES));
 
@@ -1054,10 +1028,6 @@
     const categoryFormTitle = $("categoryFormTitle");
     const cancelCategoryEditBtn = $("cancelCategoryEditBtn");
     const categoryList = $("categoryList");
-
-    const totalNotifyMode = $("totalNotifyMode");
-    const notifyPermissionBtn = $("notifyPermissionBtn");
-    const showTotalNotifyBtn = $("showTotalNotifyBtn");
 
     let expenses = loadJSON(STORAGE_KEY, []);
     let recurringRules = loadJSON(RECURRING_KEY, []);
@@ -1671,108 +1641,6 @@
       return `${Math.round(n).toLocaleString("ko-KR")}`;
     }
 
-    function getNotifySetting() {
-      const setting = loadJSON(NOTIFY_KEY, { mode: "off", lastShownDate: "" });
-      if (!setting || typeof setting !== "object") return { mode: "off", lastShownDate: "" };
-      return {
-        mode: setting.mode || "off",
-        lastShownDate: setting.lastShownDate || ""
-      };
-    }
-
-    function saveNotifySetting(setting) {
-      localStorage.setItem(NOTIFY_KEY, JSON.stringify(setting));
-    }
-
-    function updateNotifySettingUI() {
-      if (!totalNotifyMode) return;
-      totalNotifyMode.value = getNotifySetting().mode || "off";
-    }
-
-    async function requestNotificationPermission(showResult = true) {
-      if (!("Notification" in window)) {
-        if (showResult) showToast("이 브라우저는 알림을 지원하지 않습니다.");
-        return false;
-      }
-
-      if (Notification.permission === "granted") {
-        if (showResult) showToast("알림이 이미 허용되어 있습니다.");
-        return true;
-      }
-
-      if (Notification.permission === "denied") {
-        if (showResult) showToast("브라우저 설정에서 알림을 허용해 주세요.");
-        return false;
-      }
-
-      const permission = await Notification.requestPermission();
-      if (permission === "granted") {
-        if (showResult) showToast("알림이 허용되었습니다.");
-        return true;
-      }
-
-      if (showResult) showToast("알림 권한이 필요합니다.");
-      return false;
-    }
-
-    async function showTotalAmountNotification(manual = false) {
-      const ok = await requestNotificationPermission(false);
-      if (!ok) {
-        if (manual) showToast("먼저 알림 권한을 허용해 주세요.");
-        return;
-      }
-
-      const title = "전체 사용금액";
-      const options = {
-        body: formatWon(sum(expenses)),
-        icon: "./icons/icon-192.png",
-        badge: "./icons/icon-192.png",
-        tag: "personal-expense-total-amount",
-        renotify: true,
-        silent: false
-      };
-
-      try {
-        if ("serviceWorker" in navigator) {
-          const registration = await navigator.serviceWorker.ready;
-          if (registration && registration.showNotification) {
-            await registration.showNotification(title, options);
-            if (manual) showToast("전체 사용금액 알림을 보냈습니다.");
-            return;
-          }
-        }
-
-        new Notification(title, options);
-        if (manual) showToast("전체 사용금액 알림을 보냈습니다.");
-      } catch {
-        try {
-          new Notification(title, options);
-          if (manual) showToast("전체 사용금액 알림을 보냈습니다.");
-        } catch {
-          if (manual) showToast("알림 표시가 차단되었습니다.");
-        }
-      }
-    }
-
-    function maybeShowTotalNotificationOnOpen() {
-      const setting = getNotifySetting();
-      if (setting.mode !== "onOpen") return;
-
-      const today = todayISO();
-      if (setting.lastShownDate === today) return;
-
-      setTimeout(async () => {
-        const ok = await requestNotificationPermission(false);
-        if (!ok) return;
-
-        const latest = getNotifySetting();
-        if (latest.mode !== "onOpen" || latest.lastShownDate === today) return;
-        latest.lastShownDate = today;
-        saveNotifySetting(latest);
-        showTotalAmountNotification(false);
-      }, 1200);
-    }
-
     function switchView(view) {
       const map = {
         main: [mainView, mainViewBtn],
@@ -2152,28 +2020,6 @@
     statsMonth.addEventListener("change", renderStats);
     chartType.addEventListener("change", renderStats);
 
-    notifyPermissionBtn.addEventListener("click", () => {
-      requestNotificationPermission(true);
-    });
-
-    showTotalNotifyBtn.addEventListener("click", () => {
-      showTotalAmountNotification(true);
-    });
-
-    totalNotifyMode.addEventListener("change", async () => {
-      const setting = getNotifySetting();
-      setting.mode = totalNotifyMode.value;
-      if (setting.mode === "off") setting.lastShownDate = "";
-      saveNotifySetting(setting);
-
-      if (setting.mode === "onOpen") {
-        await requestNotificationPermission(true);
-        showToast("앱 실행 시 전체 사용금액 알림이 켜졌습니다.");
-      } else {
-        showToast("자동 알림을 껐습니다.");
-      }
-    });
-
     mainViewBtn.addEventListener("click", () => switchView("main"));
     calendarViewBtn.addEventListener("click", () => switchView("calendar"));
     statsViewBtn.addEventListener("click", () => switchView("stats"));
@@ -2338,12 +2184,10 @@
     });
 
     setTodayUI();
-    updateNotifySettingUI();
     applyRecurringForMonth(monthKey(todayISO()), false);
     updateCategoryOptions();
     updateFilters();
     render();
-    maybeShowTotalNotificationOnOpen();
   </script>
 </body>
 </html>
