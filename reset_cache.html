@@ -3,7 +3,7 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>개인 지출 기록장 v4.4 새로고침</title>
+  <title>개인 지출 기록장 v4.5 새로고침</title>
   <style>
     body {
       margin: 0;
@@ -39,12 +39,12 @@
 </head>
 <body>
   <main class="box">
-    <h1>v4.4 새 버전 적용</h1>
+    <h1>v4.5 새 버전 적용</h1>
     <p>
       이전 화면이 계속 보이면 이 버튼을 눌러 앱 캐시와 서비스워커만 초기화하세요.
       입력한 지출 데이터는 삭제하지 않습니다.
     </p>
-    <button id="resetBtn">캐시 지우고 v4.4 열기</button>
+    <button id="resetBtn">캐시 지우고 v4.5 열기</button>
     <p class="note" id="status">완료 후 자동으로 앱으로 이동합니다.</p>
   </main>
 
@@ -67,8 +67,8 @@
           await Promise.all(names.map(name => caches.delete(name)));
         }
 
-        statusEl.textContent = "v4.4로 이동 중...";
-        location.replace("./index.html?v=4.4-fixed-" + Date.now());
+        statusEl.textContent = "v4.5로 이동 중...";
+        location.replace("./index.html?v=4.5-final-" + Date.now());
       } catch (error) {
         statusEl.textContent = "자동 복구 중 오류가 났습니다. 브라우저 사이트 데이터를 직접 삭제한 뒤 다시 접속해 주세요.";
       }

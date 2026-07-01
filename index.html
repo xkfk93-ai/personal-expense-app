@@ -586,6 +586,49 @@
       margin-bottom: 12px;
     }
 
+    .expense-type-switch {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 8px;
+      margin-bottom: 14px;
+    }
+
+    .expense-type-switch .btn {
+      min-height: 48px;
+    }
+
+    .expense-type-switch .btn.active {
+      background: var(--accent);
+      color: #fff;
+      border-color: var(--accent);
+    }
+
+    .calculated-amount-box {
+      border: 1px solid var(--line);
+      border-radius: 18px;
+      padding: 14px;
+      background: #fffdf9;
+    }
+
+    .calculated-amount-label {
+      color: var(--muted);
+      font-size: 13px;
+      margin-bottom: 6px;
+    }
+
+    .calculated-amount-value {
+      font-size: 24px;
+      font-weight: 900;
+      letter-spacing: -0.05em;
+    }
+
+    .calculated-amount-note {
+      color: var(--muted);
+      font-size: 12px;
+      line-height: 1.5;
+      margin-top: 6px;
+    }
+
     .recurring-badge {
       display: inline-flex;
       align-items: center;
@@ -695,44 +738,92 @@
           <button class="btn ghost small" id="cancelEditBtn" type="button" style="display:none;">수정 취소</button>
         </div>
 
+        <div class="expense-type-switch">
+          <button class="btn secondary active" type="button" id="normalExpenseBtn">일반 지출</button>
+          <button class="btn secondary" type="button" id="creditExpenseBtn">신용카드 지출</button>
+        </div>
+
         <form class="form" id="expenseForm">
           <input type="hidden" id="editId" />
 
-          <div class="row two">
-            <div class="field">
-              <label for="date">날짜</label>
-              <input id="date" type="date" required />
+          <div id="normalExpenseFields">
+            <div class="row two">
+              <div class="field">
+                <label for="date">날짜</label>
+                <input id="date" type="date" required />
+              </div>
+
+              <div class="field">
+                <label for="category">카테고리</label>
+                <select id="category" required></select>
+              </div>
+            </div>
+
+            <div class="row two">
+              <div class="field">
+                <label for="place">사용처</label>
+                <input id="place" type="text" placeholder="예: 편의점, 점심, 택시" required />
+              </div>
+
+              <div class="field">
+                <label for="amount">금액</label>
+                <input id="amount" type="number" inputmode="numeric" min="1" step="1" placeholder="예: 4500" required />
+              </div>
             </div>
 
             <div class="field">
-              <label for="category">카테고리</label>
-              <select id="category" required>
-                <option value="식비">식비</option>
-                <option value="카페/간식">카페/간식</option>
-                <option value="교통">교통</option>
-                <option value="쇼핑">쇼핑</option>
-                <option value="생활용품">생활용품</option>
-                <option value="구독/통신">구독/통신</option>
-                <option value="기타">기타</option>
-              </select>
+              <label for="note">메모</label>
+              <textarea id="note" placeholder="필요하면 간단히 적어두세요."></textarea>
             </div>
           </div>
 
-          <div class="row two">
-            <div class="field">
-              <label for="place">사용처</label>
-              <input id="place" type="text" placeholder="예: 편의점, 점심, 택시" required />
+          <div id="creditExpenseFields" class="hidden">
+            <div class="row two">
+              <div class="field">
+                <label for="creditFirstDate">첫 카드결제일</label>
+                <input id="creditFirstDate" type="date" />
+              </div>
+
+              <div class="field">
+                <label for="creditCategory">카테고리</label>
+                <select id="creditCategory"></select>
+              </div>
+            </div>
+
+            <div class="row two">
+              <div class="field">
+                <label for="creditPlace">사용처</label>
+                <input id="creditPlace" type="text" placeholder="예: 노트북, 가전, 병원비" />
+              </div>
+
+              <div class="field">
+                <label for="creditTotalAmount">총 결제금액</label>
+                <input id="creditTotalAmount" type="number" inputmode="numeric" min="1" step="1" placeholder="예: 300000" />
+              </div>
+            </div>
+
+            <div class="row two">
+              <div class="field">
+                <label for="creditInstallmentMonths">할부기간</label>
+                <select id="creditInstallmentMonths"></select>
+              </div>
+
+              <div class="calculated-amount-box">
+                <div class="calculated-amount-label">월 결제금액</div>
+                <div class="calculated-amount-value" id="creditMonthlyAmountText">0원</div>
+                <div class="calculated-amount-note" id="creditMonthlyNote">총 결제금액과 할부기간을 입력하면 자동 계산됩니다.</div>
+              </div>
             </div>
 
             <div class="field">
-              <label for="amount">금액</label>
-              <input id="amount" type="number" inputmode="numeric" min="1" step="1" placeholder="예: 4500" required />
+              <label for="creditNote">메모</label>
+              <textarea id="creditNote" placeholder="필요하면 간단히 적어두세요."></textarea>
             </div>
-          </div>
 
-          <div class="field">
-            <label for="note">메모</label>
-            <textarea id="note" placeholder="필요하면 간단히 적어두세요."></textarea>
+            <p class="notice">
+              신용카드 지출은 카드결제일 기준으로 할부 고정지출에 자동 등록됩니다.
+              결제일이 된 회차부터 지출 내역에 기록되고, 할부가 끝나면 고정지출 목록에서 자동 정리됩니다.
+            </p>
           </div>
 
           <button class="btn" type="submit" id="submitBtn">추가하기</button>
@@ -916,7 +1007,7 @@
         </form>
 
         <p class="notice">
-          저장한 고정지출은 지정일이 오늘이거나 지난 뒤에만 지출 내역에 자동 입력됩니다. 예를 들어 매월 5일 고정지출은 1~4일에는 전체 사용금액에 포함되지 않고, 5일 이후 앱을 열 때 기록됩니다.
+          저장한 고정지출은 지정일이 오늘이거나 지난 뒤에만 지출 내역에 자동 입력됩니다. 신용카드 할부는 결제일이 된 회차부터 기록되고, 할부가 끝나면 고정지출 목록에서 자동 정리됩니다.
         </p>
       </section>
 
@@ -953,9 +1044,9 @@
       </section>
     </section>
 
-    <div id="appVersionMarker" style="display:none;">v4.4 수정본</div>
+    <div id="appVersionMarker" style="display:none;">v4.5 수정본</div>
     <div class="footer">
-      개인용 설치형 웹앱 · 데이터는 사용자의 기기에 저장됩니다. · v4.4 수정본
+      개인용 설치형 웹앱 · 데이터는 사용자의 기기에 저장됩니다. · v4.5 수정본
     </div>
   </main>
 
@@ -991,6 +1082,19 @@
     const submitBtn = $("submitBtn");
     const formTitle = $("formTitle");
     const cancelEditBtn = $("cancelEditBtn");
+
+    const normalExpenseBtn = $("normalExpenseBtn");
+    const creditExpenseBtn = $("creditExpenseBtn");
+    const normalExpenseFields = $("normalExpenseFields");
+    const creditExpenseFields = $("creditExpenseFields");
+    const creditFirstDate = $("creditFirstDate");
+    const creditCategory = $("creditCategory");
+    const creditPlace = $("creditPlace");
+    const creditTotalAmount = $("creditTotalAmount");
+    const creditInstallmentMonths = $("creditInstallmentMonths");
+    const creditMonthlyAmountText = $("creditMonthlyAmountText");
+    const creditMonthlyNote = $("creditMonthlyNote");
+    const creditNote = $("creditNote");
 
     const mainView = $("mainView");
     const calendarView = $("calendarView");
@@ -1046,6 +1150,7 @@
     let calendarYear;
     let calendarMonth;
     let selectedDate = todayISO();
+    let expenseMode = "normal";
     let deferredInstallPrompt = null;
 
     if ("serviceWorker" in navigator) {
@@ -1244,6 +1349,7 @@
       populateSelect(categoryInput, categoryInput.value, false);
       populateSelect(filterCategory, filterCategory.value || "전체", true);
       populateSelect(recurringCategory, recurringCategory.value || "구독/통신", false);
+      populateSelect(creditCategory, creditCategory ? (creditCategory.value || "쇼핑") : "쇼핑", false);
     }
 
     function getDefaultCategory(preferred = "식비") {
@@ -1260,19 +1366,98 @@
       return items.reduce((acc, item) => acc + Number(item.amount || 0), 0);
     }
 
+    function fillInstallmentMonths() {
+      if (!creditInstallmentMonths) return;
+      creditInstallmentMonths.innerHTML = "";
+      for (let i = 1; i <= 36; i++) {
+        const option = document.createElement("option");
+        option.value = String(i);
+        option.textContent = i === 1 ? "일시불 / 1개월" : `${i}개월`;
+        creditInstallmentMonths.appendChild(option);
+      }
+      creditInstallmentMonths.value = "1";
+    }
+
+    function addMonthsToDateString(dateString, monthsToAdd) {
+      const [year, month, day] = dateString.split("-").map(Number);
+      const target = new Date(year, month - 1 + monthsToAdd, 1);
+      const lastDay = new Date(target.getFullYear(), target.getMonth() + 1, 0).getDate();
+      const finalDay = Math.min(day, lastDay);
+      return makeDateString(target.getFullYear(), target.getMonth(), finalDay);
+    }
+
+    function getMonthlyInstallmentAmount(total, months) {
+      const totalNumber = Number(total || 0);
+      const monthNumber = Number(months || 1);
+      if (!totalNumber || !monthNumber) return 0;
+      return Math.round(totalNumber / monthNumber);
+    }
+
+    function updateCreditMonthlyAmount() {
+      if (!creditMonthlyAmountText) return;
+
+      const total = Number(creditTotalAmount.value || 0);
+      const months = Number(creditInstallmentMonths.value || 1);
+      const monthly = getMonthlyInstallmentAmount(total, months);
+
+      creditMonthlyAmountText.textContent = formatWon(monthly);
+
+      if (!total) {
+        creditMonthlyNote.textContent = "총 결제금액과 할부기간을 입력하면 자동 계산됩니다.";
+        return;
+      }
+
+      const remainder = total - monthly * months;
+      if (remainder === 0) {
+        creditMonthlyNote.textContent = `${formatWon(total)} ÷ ${months}개월`;
+      } else {
+        creditMonthlyNote.textContent = `${formatWon(total)} ÷ ${months}개월 · 마지막 회차에서 ${formatWon(Math.abs(remainder))} 보정`;
+      }
+    }
+
+    function setExpenseMode(mode) {
+      if (editId.value) return;
+
+      expenseMode = mode;
+      const isCredit = mode === "credit";
+
+      normalExpenseBtn.classList.toggle("active", !isCredit);
+      creditExpenseBtn.classList.toggle("active", isCredit);
+      normalExpenseFields.classList.toggle("hidden", isCredit);
+      creditExpenseFields.classList.toggle("hidden", !isCredit);
+
+      submitBtn.textContent = isCredit ? "신용카드 할부 등록" : "추가하기";
+      formTitle.textContent = isCredit ? "신용카드 지출 추가" : "지출 추가";
+
+      dateInput.required = !isCredit;
+      categoryInput.required = !isCredit;
+      placeInput.required = !isCredit;
+      amountInput.required = !isCredit;
+
+      creditFirstDate.required = isCredit;
+      creditCategory.required = isCredit;
+      creditPlace.required = isCredit;
+      creditTotalAmount.required = isCredit;
+
+      updateCreditMonthlyAmount();
+    }
+
     function setTodayUI() {
       const now = new Date();
       $("todayText").textContent = now.toLocaleDateString("ko-KR", {
         year: "numeric", month: "long", day: "numeric", weekday: "long"
       });
       dateInput.value = todayISO();
+      creditFirstDate.value = todayISO();
       calendarYear = now.getFullYear();
       calendarMonth = now.getMonth();
       selectedDate = todayISO();
       recurringStartMonth.value = monthKey(todayISO());
       fillCycleStartDays();
       fillRecurringDays();
+      fillInstallmentMonths();
       updateCategoryOptions();
+      updateCreditMonthlyAmount();
       updateCycleSettingText();
     }
 
@@ -1738,7 +1923,41 @@
       return removed;
     }
 
+    function cleanupCompletedInstallmentRules() {
+      const todayMonth = monthKey(todayISO());
+      const before = recurringRules.length;
+
+      recurringRules = recurringRules.filter(rule => {
+        if (rule.type !== "creditInstallment") return true;
+        if (!rule.endMonth) return true;
+        return rule.endMonth >= todayMonth;
+      });
+
+      const removed = before - recurringRules.length;
+      if (removed > 0) saveAll();
+      return removed;
+    }
+
+    function makeCreditInstallmentNote(rule, month) {
+      if (rule.type !== "creditInstallment") return rule.note || "";
+
+      const [sy, sm] = rule.startMonth.split("-").map(Number);
+      const [cy, cm] = month.split("-").map(Number);
+      const nth = (cy - sy) * 12 + (cm - sm) + 1;
+      const totalMonths = Number(rule.installmentMonths || 1);
+
+      const parts = [
+        `신용카드 할부 ${nth}/${totalMonths}회차`,
+        `총 결제금액 ${formatWon(rule.totalAmount || 0)}`
+      ];
+
+      if (rule.note) parts.push(rule.note);
+      return parts.join(" · ");
+    }
+
     function applyRecurringForMonth(month = monthKey(todayISO()), manual = false) {
+      cleanupCompletedInstallmentRules();
+
       if (!recurringRules.length) {
         if (manual) showToast("등록된 고정지출이 없습니다.");
         return 0;
@@ -1755,14 +1974,12 @@
       recurringRules.forEach(rule => {
         if (rule.disabled) return;
         if (rule.startMonth && rule.startMonth > month) return;
+        if (rule.endMonth && rule.endMonth < month) return;
 
         const day = Math.min(Number(rule.day || 1), lastDay);
         const date = `${month}-${String(day).padStart(2, "0")}`;
         const recurringKey = `${rule.id}_${month}`;
 
-        // v4.4 핵심 수정:
-        // 고정지출은 지정일이 오늘이거나 지난 경우에만 실제 지출 내역으로 생성합니다.
-        // 지정일이 아직 오지 않은 고정지출은 전체 사용금액에 포함되지 않습니다.
         if (date > today) {
           pending += 1;
           return;
@@ -1780,7 +1997,7 @@
           category: rule.category || "기타",
           place: rule.place,
           amount: Number(rule.amount || 0),
-          note: rule.note || "",
+          note: rule.type === "creditInstallment" ? makeCreditInstallmentNote(rule, month) : (rule.note || ""),
           recurringRuleId: rule.id,
           recurringKey,
           createdAt: Date.now()
@@ -1799,31 +2016,45 @@
         showToast("입력할 고정지출이 없습니다.");
       }
 
+      cleanupCompletedInstallmentRules();
       return added;
     }
 
     function renderRecurringList() {
+      cleanupCompletedInstallmentRules();
+
       if (!recurringRules.length) {
         recurringList.innerHTML = `<div class="empty">등록된 고정지출이 없습니다.</div>`;
         return;
       }
 
-      recurringList.innerHTML = recurringRules.map(rule => `
-        <article class="item">
-          <div class="item-main">
-            <div>
-              <div class="item-title">${escapeHTML(rule.place)}</div>
-              <div class="item-meta">매월 ${rule.day}일 · ${escapeHTML(rule.category)} · 시작 ${rule.startMonth || "-"}</div>
+      recurringList.innerHTML = recurringRules.map(rule => {
+        const isCredit = rule.type === "creditInstallment";
+        const title = isCredit ? `${escapeHTML(rule.place)} <span class="recurring-badge">카드 할부</span>` : escapeHTML(rule.place);
+        const meta = isCredit
+          ? `매월 ${rule.day}일 · ${escapeHTML(rule.category)} · ${rule.installmentMonths}개월 할부 · 종료 ${rule.endMonth}`
+          : `매월 ${rule.day}일 · ${escapeHTML(rule.category)} · 시작 ${rule.startMonth || "-"}`;
+        const note = isCredit
+          ? `총 결제금액 ${formatWon(rule.totalAmount || 0)}${rule.note ? " · " + escapeHTML(rule.note) : ""}`
+          : (rule.note ? escapeHTML(rule.note) : "");
+
+        return `
+          <article class="item">
+            <div class="item-main">
+              <div>
+                <div class="item-title">${title}</div>
+                <div class="item-meta">${meta}</div>
+              </div>
+              <div class="item-amount">${formatWon(rule.amount)}</div>
             </div>
-            <div class="item-amount">${formatWon(rule.amount)}</div>
-          </div>
-          ${rule.note ? `<div class="item-note">${escapeHTML(rule.note)}</div>` : ""}
-          <div class="item-actions">
-            <button class="btn ghost small" type="button" onclick="startRecurringEdit('${rule.id}')">수정</button>
-            <button class="btn danger small" type="button" onclick="deleteRecurring('${rule.id}')">삭제</button>
-          </div>
-        </article>
-      `).join("");
+            ${note ? `<div class="item-note">${note}</div>` : ""}
+            <div class="item-actions">
+              ${isCredit ? "" : `<button class="btn ghost small" type="button" onclick="startRecurringEdit('${rule.id}')">수정</button>`}
+              <button class="btn danger small" type="button" onclick="deleteRecurring('${rule.id}')">삭제</button>
+            </div>
+          </article>
+        `;
+      }).join("");
     }
 
     function renderCategoryList() {
@@ -1855,6 +2086,57 @@
 
     form.addEventListener("submit", (event) => {
       event.preventDefault();
+
+      if (expenseMode === "credit" && !editId.value) {
+        const total = Number(creditTotalAmount.value);
+        const months = Number(creditInstallmentMonths.value || 1);
+        const monthly = getMonthlyInstallmentAmount(total, months);
+        const place = creditPlace.value.trim();
+        const firstDate = creditFirstDate.value;
+
+        if (!firstDate) {
+          showToast("첫 카드결제일을 입력해 주세요.");
+          return;
+        }
+
+        if (!place) {
+          showToast("사용처를 입력해 주세요.");
+          return;
+        }
+
+        if (!total || total < 1) {
+          showToast("총 결제금액을 확인해 주세요.");
+          return;
+        }
+
+        const startMonth = monthKey(firstDate);
+        const endDate = addMonthsToDateString(firstDate, months - 1);
+        const endMonth = monthKey(endDate);
+        const day = Number(firstDate.slice(8, 10));
+
+        recurringRules.push({
+          id: createId(),
+          type: "creditInstallment",
+          place,
+          amount: monthly,
+          totalAmount: total,
+          installmentMonths: months,
+          category: creditCategory.value || getDefaultCategory("쇼핑"),
+          day,
+          startMonth,
+          endMonth,
+          firstDate,
+          note: creditNote.value.trim(),
+          createdAt: Date.now()
+        });
+
+        cleanupCompletedInstallmentRules();
+        applyRecurringForMonth(monthKey(todayISO()), false);
+        resetCreditForm();
+        render();
+        showToast("신용카드 할부가 고정지출에 등록되었습니다.");
+        return;
+      }
 
       const amount = Number(amountInput.value);
       if (!amount || amount < 1) {
@@ -1895,6 +2177,7 @@
       const item = expenses.find(x => x.id === id);
       if (!item) return;
       switchView("main");
+      setExpenseMode("normal");
       editId.value = item.id;
       dateInput.value = item.date;
       categoryInput.value = item.category;
@@ -1917,6 +2200,18 @@
       submitBtn.textContent = "추가하기";
       formTitle.textContent = "지출 추가";
       cancelEditBtn.style.display = "none";
+      updateCategoryOptions();
+      setExpenseMode("normal");
+    }
+
+    function resetCreditForm() {
+      creditFirstDate.value = todayISO();
+      creditCategory.value = getDefaultCategory("쇼핑");
+      creditPlace.value = "";
+      creditTotalAmount.value = "";
+      creditInstallmentMonths.value = "1";
+      creditNote.value = "";
+      updateCreditMonthlyAmount();
     }
 
     cancelEditBtn.addEventListener("click", resetForm);
@@ -2102,6 +2397,11 @@
     statsMonth.addEventListener("change", renderStats);
     chartType.addEventListener("change", renderStats);
 
+    normalExpenseBtn.addEventListener("click", () => setExpenseMode("normal"));
+    creditExpenseBtn.addEventListener("click", () => setExpenseMode("credit"));
+    creditTotalAmount.addEventListener("input", updateCreditMonthlyAmount);
+    creditInstallmentMonths.addEventListener("change", updateCreditMonthlyAmount);
+
     mainViewBtn.addEventListener("click", () => switchView("main"));
     calendarViewBtn.addEventListener("click", () => switchView("calendar"));
     statsViewBtn.addEventListener("click", () => switchView("stats"));
@@ -2249,6 +2549,7 @@
 
     setTodayUI();
     cleanupFutureRecurringExpenses();
+    cleanupCompletedInstallmentRules();
     applyRecurringForMonth(monthKey(todayISO()), false);
     updateCategoryOptions();
     updateFilters();
