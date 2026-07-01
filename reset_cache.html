@@ -3,7 +3,7 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>개인 지출 기록장 새로고침</title>
+  <title>개인 지출 기록장 v4.4 새로고침</title>
   <style>
     body {
       margin: 0;
@@ -68,7 +68,7 @@
         }
 
         statusEl.textContent = "v4.4로 이동 중...";
-        location.replace("./index.html?v=4.4-" + Date.now());
+        location.replace("./index.html?v=4.4-fixed-" + Date.now());
       } catch (error) {
         statusEl.textContent = "자동 복구 중 오류가 났습니다. 브라우저 사이트 데이터를 직접 삭제한 뒤 다시 접속해 주세요.";
       }

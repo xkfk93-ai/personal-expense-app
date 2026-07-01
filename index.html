@@ -916,7 +916,7 @@
         </form>
 
         <p class="notice">
-          저장한 고정지출은 앱을 열 때 이번 달 내역에 자동으로 입력됩니다. 중복 입력되지 않도록 같은 월에는 한 번만 생성됩니다.
+          저장한 고정지출은 지정일이 오늘이거나 지난 뒤에만 지출 내역에 자동 입력됩니다. 예를 들어 매월 5일 고정지출은 1~4일에는 전체 사용금액에 포함되지 않고, 5일 이후 앱을 열 때 기록됩니다.
         </p>
       </section>
 
@@ -953,8 +953,9 @@
       </section>
     </section>
 
+    <div id="appVersionMarker" style="display:none;">v4.4 수정본</div>
     <div class="footer">
-      개인용 설치형 웹앱 · 데이터는 사용자의 기기에 저장됩니다. · v4.2 수정본
+      개인용 설치형 웹앱 · 데이터는 사용자의 기기에 저장됩니다. · v4.4 수정본
     </div>
   </main>
 
@@ -1302,12 +1303,26 @@
       recurringDay.value = "1";
     }
 
+    function getEffectiveExpensesForTotals() {
+      const today = todayISO();
+
+      // 미래 날짜의 자동 고정지출은 전체/기간 합계에서 제외합니다.
+      // 과거 버전에서 미리 생성된 항목이 남아 있어도 금액 합계에 잡히지 않도록 방어합니다.
+      return expenses.filter(item => {
+        const isFuture = item.date > today;
+        const isAutoRecurring = item.recurringRuleId || item.recurringKey;
+        return !(isFuture && isAutoRecurring);
+      });
+    }
+
     function updateSummary() {
       const today = todayISO();
       const currentCycle = getCycleInfoForDate(today);
-      todayTotal.textContent = formatWon(sum(expenses.filter(item => item.date === today)));
-      monthTotal.textContent = formatWon(sum(expenses.filter(item => getCycleInfoForDate(item.date).key === currentCycle.key)));
-      allTotal.textContent = formatWon(sum(expenses));
+      const effectiveExpenses = getEffectiveExpensesForTotals();
+
+      todayTotal.textContent = formatWon(sum(effectiveExpenses.filter(item => item.date === today)));
+      monthTotal.textContent = formatWon(sum(effectiveExpenses.filter(item => getCycleInfoForDate(item.date).key === currentCycle.key)));
+      allTotal.textContent = formatWon(sum(effectiveExpenses));
       updateCycleSettingText();
     }
 
@@ -1706,15 +1721,36 @@
       renderCategoryList();
     }
 
+    function cleanupFutureRecurringExpenses() {
+      const today = todayISO();
+      const before = expenses.length;
+
+      // 직접 입력한 미래 지출은 유지하고,
+      // 자동 고정지출로 미리 생성된 미래 날짜 항목만 정리합니다.
+      expenses = expenses.filter(item => {
+        const isAutoRecurring = item.recurringRuleId || item.recurringKey;
+        const isFuture = item.date > today;
+        return !(isAutoRecurring && isFuture);
+      });
+
+      const removed = before - expenses.length;
+      if (removed > 0) saveAll();
+      return removed;
+    }
+
     function applyRecurringForMonth(month = monthKey(todayISO()), manual = false) {
       if (!recurringRules.length) {
         if (manual) showToast("등록된 고정지출이 없습니다.");
         return 0;
       }
 
+      const today = todayISO();
       const [year, monthNumber] = month.split("-").map(Number);
       const lastDay = new Date(year, monthNumber, 0).getDate();
+
       let added = 0;
+      let pending = 0;
+      let already = 0;
 
       recurringRules.forEach(rule => {
         if (rule.disabled) return;
@@ -1724,8 +1760,19 @@
         const date = `${month}-${String(day).padStart(2, "0")}`;
         const recurringKey = `${rule.id}_${month}`;
 
+        // v4.4 핵심 수정:
+        // 고정지출은 지정일이 오늘이거나 지난 경우에만 실제 지출 내역으로 생성합니다.
+        // 지정일이 아직 오지 않은 고정지출은 전체 사용금액에 포함되지 않습니다.
+        if (date > today) {
+          pending += 1;
+          return;
+        }
+
         const exists = expenses.some(item => item.recurringKey === recurringKey);
-        if (exists) return;
+        if (exists) {
+          already += 1;
+          return;
+        }
 
         expenses.push({
           id: createId(),
@@ -1744,9 +1791,14 @@
       if (added > 0) {
         saveAll();
         if (manual) showToast(`${added}개 고정지출을 입력했습니다.`);
-      } else if (manual) {
+      } else if (manual && pending > 0 && already === 0) {
+        showToast("아직 입력일이 되지 않은 고정지출입니다.");
+      } else if (manual && already > 0) {
         showToast("이번 달 고정지출은 이미 입력되어 있습니다.");
+      } else if (manual) {
+        showToast("입력할 고정지출이 없습니다.");
       }
+
       return added;
     }
 
@@ -2196,6 +2248,7 @@
     });
 
     setTodayUI();
+    cleanupFutureRecurringExpenses();
     applyRecurringForMonth(monthKey(todayISO()), false);
     updateCategoryOptions();
     updateFilters();

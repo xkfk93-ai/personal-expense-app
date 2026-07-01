@@ -1,4 +1,4 @@
-const CACHE_NAME = "personal-expense-pwa-v4-4-recurring-due-fixed";
+const CACHE_NAME = "personal-expense-pwa-v4-4-fixed-final";
 const FILES_TO_CACHE = [
   "./",
   "./index.html",

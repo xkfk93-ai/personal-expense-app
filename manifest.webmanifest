@@ -1,8 +1,8 @@
 {
   "name": "개인 지출 기록장",
   "short_name": "지출 기록장",
-  "description": "개인 지출 기록장 v4.4 - 고정지출은 지정일 이후에만 전체 사용금액에 반영",
-  "start_url": "./index.html?v=4.4",
+  "description": "개인 지출 기록장 v4.4 수정본 - 고정지출은 지정일 이후에만 전체 사용금액에 반영",
+  "start_url": "./index.html?v=4.4-fixed",
   "scope": "./",
   "display": "standalone",
   "background_color": "#f6f4ef",
